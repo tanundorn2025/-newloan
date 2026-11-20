@@ -84,7 +84,8 @@ select,input[type=search]{font:inherit;background:var(--surface);color:var(--ink
 .insights li{color:var(--ink)}
 .insights li b{font-weight:600}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:8px;margin:8px 0}
-.card h3{margin:0;font-size:15px}
+.card h3{margin:0;font-size:15px;padding-right:170px}
+@media (max-width:520px){.card h3{padding-right:0;margin-top:26px}}
 .card .cap{margin:2px 0 8px;font-size:12px;color:var(--muted)}
 .chart-box{position:relative;height:300px}
 .chart-box.tall{height:340px}
@@ -105,6 +106,9 @@ tbody tr:hover{background:var(--accent-soft)}
 .legend-note{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink2)}
 .card.zoomable{cursor:zoom-in}
 .enl{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:6px;font:inherit;font-size:12px;padding:1px 7px;cursor:pointer;opacity:.85}
+.lblt{position:absolute;top:6px;right:78px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:6px;font:inherit;font-size:12px;padding:1px 8px;cursor:pointer}
+.lblt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.lblt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .enl:hover{border-color:var(--accent);color:var(--accent);opacity:1}
 .zoom{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;align-items:center;justify-content:center;padding:6px}
 .zoom-card{background:var(--surface);color:var(--ink);border-radius:12px;width:100%;height:100%;max-height:96vh;display:flex;flex-direction:column;padding:10px 12px}
@@ -332,12 +336,34 @@ Chart.register(valueLabels);
 const REG_LIGHT=['#0b6b30','#f5c400','#1a9fdc','#6833ad'], REG_DARK=['#1f8a45','#ffd21f','#2f9fe0','#8656d4'], RPS=['circle','triangle','rect','rectRot'];
 function isDarkBg(){ const h=css('--bg').replace('#',''); if(h.length<6) return false; const n=parseInt(h.slice(0,6),16); return (0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))<128; }
 function theme(){ return {r:isDarkBg()?REG_DARK:REG_LIGHT,ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
+const LINE_LBL={ch1:v=>v.toFixed(1),ch2:v=>v.toFixed(0)+'%',ch4:v=>v.toFixed(0)+'%',ch9:v=>v.toFixed(1)+'%',ch13:v=>v.toFixed(0)};
+const LBL_TITLE={ch1:'ล้านบาท',ch2:'%',ch4:'%',ch9:'%',ch13:'ล้านบาท'};
+st.lbl=new Set(); try{ JSON.parse(localStorage.getItem('loan-lbl')||'[]').forEach(x=>st.lbl.add(x)); }catch(e){}
+const pointLabels={id:'pointLabels',afterDatasetsDraw(chart,_a,o){
+  if(!o||!o.show||!o.fmt) return; const {ctx,chartArea:ca}=chart; ctx.save();
+  ctx.font='600 11px '+getComputedStyle(document.body).fontFamily; ctx.textAlign='center'; ctx.lineJoin='round';
+  let k=0;
+  chart.data.datasets.forEach((ds,i)=>{ if(ds.noPt||/^เป้า 100%/.test(ds.label||'')) return; const meta=chart.getDatasetMeta(i); if(meta.hidden||meta.type!=='line') return;
+    const above=k++%2===0;
+    meta.data.forEach((el,j)=>{ const v=ds.data[j]; if(v==null||!Number.isFinite(el.x)||!Number.isFinite(el.y)) return;
+      const txt=o.fmt(v); let y=above?el.y-8:el.y+8; ctx.textBaseline=above?'bottom':'top';
+      if(y<ca.top+10){y=el.y+8;ctx.textBaseline='top';} if(y>ca.bottom-10){y=el.y-8;ctx.textBaseline='bottom';}
+      ctx.lineWidth=3; ctx.strokeStyle=o.halo; ctx.strokeText(txt,el.x,y);
+      ctx.fillStyle=fillFor(ds.borderColor,o); ctx.fillText(txt,el.x,y); }); });
+  ctx.restore(); }};
+Chart.register(pointLabels);
+function fillFor(c,o){ // keep colored labels readable against the surface
+  const h=String(c||'').replace('#',''); if(h.length<6) return o.ink; const n=parseInt(h.slice(0,6),16);
+  const L=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255; const dark=isDarkBg();
+  return (!dark&&L>0.62)||(dark&&L<0.35)?o.ink:c; }
 function mk(id,cfg){
   if(charts[id]) charts[id].destroy();
   const th=theme();
   Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
   Chart.defaults.font.size=12; Chart.defaults.color=th.ink2;
   cfg.options=Object.assign({responsive:true,maintainAspectRatio:false,animation:false},cfg.options||{});
+  if(LINE_LBL[id]){ cfg.options.plugins=cfg.options.plugins||{}; cfg.options.plugins.pointLabels={show:st.lbl.has(id),fmt:LINE_LBL[id],halo:th.surface,ink:th.ink};
+    if(st.lbl.has(id)) cfg.options.layout=Object.assign({},cfg.options.layout,{padding:Object.assign({top:10,right:16,left:6},(cfg.options.layout||{}).padding)}); }
   cfgCopy[id]=deepClone(cfg);
   charts[id]=new Chart($(id),cfg); return charts[id];
 }
@@ -621,6 +647,7 @@ function exportXlsx(){
 async function exportPptx(){
   const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; // 13.33 x 7.5
   const FONT='Tahoma', INK='1F2937', GREY='6B7280', BLUE='2A78D6', ORG='EB6834', AQ='1BAF7A', YEL='EDA100', TGT='8A909C', RED='D23B3A', GRN='0B8A55';
+  const pv=(id,fc)=>st.lbl.has(id)?{showValue:true,dataLabelFormatCode:fc,dataLabelFontSize:9,dataLabelPosition:'t',dataLabelFontFace:FONT}:{};
   const RC=['0B6B30','F5C400','1A9FDC','6833AD'];
   const f=st.month, t=st.type, reg=0, v=computeView(), ins=insights();
   const head=(s,title,sub)=>{ s.background={color:'FFFFFF'}; s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:0.12,fill:{color:BLUE}});
@@ -649,13 +676,13 @@ async function exportPptx(){
   const ms=monthSeries(t);
   s=pptx.addSlide(); head(s,'ยอดปล่อยรายเดือน เทียบเป้าหมาย',`${TYPES[t]} · ${regLabel()} · ล้านบาท`);
   s.addChart(pptx.charts.LINE,[{name:'เป้าหมาย',labels:MS,values:ms.map(x=>+(x.t/1e6).toFixed(1))},{name:'ทำได้',labels:MS,values:ms.map(x=>+(x.a/1e6).toFixed(1))}],
-    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[TGT,BLUE],lineSize:3,lineDataSymbolSize:8,valAxisTitle:'ล้านบาท',showValAxisTitle:true,valAxisTitleFontFace:FONT});
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[TGT,BLUE],lineSize:3,lineDataSymbolSize:8,...pv('ch1','0.0'),valAxisTitle:'ล้านบาท',showValAxisTitle:true,valAxisTitleFontFace:FONT});
   take(s,ins[1]);
   // 4 pct by region
   s=pptx.addSlide(); head(s,'% ทำได้ตามเป้า รายภาค',`${TYPES[t]} · ${MS[0]} – ${MS[LAST]}`);
   const rl=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({name:'ภาค '+r,labels:MS,values:monthSeries(t,r).map(x=>x.p==null?null:+(x.p*100).toFixed(1))}));
   rl.push({name:'รวม',labels:MS,values:ms.map(x=>x.p==null?null:+(x.p*100).toFixed(1))});
-  s.addChart(pptx.charts.LINE,rl,{x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[...[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),INK],lineSize:3,lineDataSymbolSize:7,valAxisLabelFormatCode:'0"%"'});
+  s.addChart(pptx.charts.LINE,rl,{x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[...[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),INK],lineSize:3,lineDataSymbolSize:7,...pv('ch2','0\"%\"'),valAxisLabelFormatCode:'0"%"'});
   const bestR=[...v.regs].filter(x=>x.p!=null).sort((a,b)=>b.p-a.p); take(s,bestR.length>1?ins[2]:ins[0]);
   // 5 stacked by type
   const g=monthSeries('gen'),fe=monthSeries('fert');
@@ -666,7 +693,7 @@ async function exportPptx(){
   // 6 gen vs fert pct
   s=pptx.addSlide(); head(s,'สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย (% ทำได้)',`${regLabel()}`);
   s.addChart(pptx.charts.LINE,[{name:'ทั่วไป (ยกเว้นปุ๋ย)',labels:MS,values:g.map(x=>x.p==null?null:+(x.p*100).toFixed(1))},{name:'ปุ๋ย',labels:MS,values:fe.map(x=>x.p==null?null:+(x.p*100).toFixed(1))}],
-    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,AQ],lineSize:3,lineDataSymbolSize:8,valAxisLabelFormatCode:'0"%"'});
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,AQ],lineSize:3,lineDataSymbolSize:8,...pv('ch4','0"%"'),valAxisLabelFormatCode:'0"%"'});
   // 7 region at focus
   const regs=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({r,...agg(selRows(r),t)}));
   s=pptx.addSlide(); head(s,`เป้า เทียบ ทำได้ รายภาค · ${mLabel()}`,t==='all'?'% ทำได้ แยกสินเชื่อทั่วไป / ปุ๋ย / รวม':`${TYPES[t]} · ล้านบาท`);
@@ -700,7 +727,7 @@ async function exportPptx(){
     s=pptx.addSlide(); head(s,'NPL รายภาค และพื้นที่ NPL สูงสุด',`ค่าเฉลี่ยรายพื้นที่ (ไม่ถ่วงน้ำหนัก) · ${nplFrom()} – ${MS[v.nmo]}`);
     const nmL=nplMonths().filter(m=>m<=v.nmo);
     s.addChart(pptx.charts.LINE,[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({name:'ภาค '+r,labels:nmL.map(m=>MS[m]),values:nmL.map(m=>{const a=avg(nplRows(m,r).map(x=>x[9]));return a==null?null:+(a*100).toFixed(2);})})),
-      {x:0.4,y:1.4,w:6.1,h:4.8,...axisOpt,chartColors:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),lineSize:3,lineDataSymbolSize:8,valAxisLabelFormatCode:'0.0"%"'});
+      {x:0.4,y:1.4,w:6.1,h:4.8,...axisOpt,chartColors:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),lineSize:3,lineDataSymbolSize:8,...pv('ch9','0.0"%"'),valAxisLabelFormatCode:'0.0"%"'});
     const nr=nplRows(v.nmo).sort((a,b)=>b[9]-a[9]).slice(0,10);
     s.addChart(pptx.charts.BAR,[{name:'NPL',labels:nr.map(r=>r[4]),values:nr.map(r=>+(r[9]*100).toFixed(1))}],{x:6.8,y:1.4,w:6.1,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[RED],showValue:true,dataLabelFormatCode:'0.0"%"',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
     take(s,ins.find(x=>x.startsWith('NPL'))||ins[0]);
@@ -732,7 +759,7 @@ async function exportPptx(){
     pc.monthNos.forEach((no,i)=>{A1[ix(no)]=+(pc.cumA[i]/1e6).toFixed(1);T1[ix(no)]=+(pc.cumT[i]/1e6).toFixed(1);});
     if(pc.remaining>0){PA[li]=A1[li];PT[li]=T1[li];for(let j=1;j<=pc.remaining;j++){PA[li+j]=+((pc.ytdA+j*pc.runA)/1e6).toFixed(1);PT[li+j]=+((pc.ytdT+j*pc.runT)/1e6).toFixed(1);}}
     s.addChart(pptx.charts.LINE,[{name:'ยอดสะสม',labels:Lb,values:A1},{name:'เป้าสะสม',labels:Lb,values:T1},{name:'คาดการณ์',labels:Lb,values:PA},{name:'เป้าประมาณการ',labels:Lb,values:PT}],
-      {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,TGT,'7FB0F5','C5C9D1'],lineSize:3,lineDataSymbolSize:6});
+      {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,TGT,'7FB0F5','C5C9D1'],lineSize:3,lineDataSymbolSize:6,...pv('ch13','#,##0')});
     take(s,pc.remaining>0?`ต้องปล่อยเฉลี่ย ${M(pc.need)} ล้านบาท/เดือน ในอีก ${pc.remaining} เดือน (อัตราปัจจุบัน ${M(pc.runA)}) · คาดการณ์สิ้นปี ${M(pc.projA)} ล้านบาท = ${P(pc.estAnnualT?pc.projA/pc.estAnnualT:null)} ของเป้าประมาณ ${M(pc.estAnnualT)} (เป้า ${MS12[pc.lastNo+1]}–ธ.ค. ประมาณจากค่าเฉลี่ย ${pc.k} เดือนล่าสุด)`:`ทั้งปีทำได้ ${M(pc.ytdA)} ล้านบาท`);
     const B2=analysis2();
     if(B2.gf.length){ s=pptx.addSlide(); head(s,'สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย รายพื้นที่',`${regLabel()} · ${mLabel()} · % ทำได้`);
@@ -1035,6 +1062,11 @@ function init(){
   $('fileIn').onchange=async e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ console.error(err); toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } e.target.value=''; };
   $('btnUpload').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fileIn').click();}});
   $('btnClear').onclick=clearData;
+  Object.keys(LINE_LBL).forEach(id=>{ const cv=$(id); const c=cv&&cv.closest('.card'); if(!c) return;
+    const b=document.createElement('button'); b.type='button'; b.className='lblt'; b.dataset.chart=id; b.setAttribute('data-noexport','');
+    b.setAttribute('aria-pressed',st.lbl.has(id)); b.title='แสดง/ซ่อนตัวเลขที่จุด ('+LBL_TITLE[id]+')'; b.textContent='ตัวเลขที่จุด'; c.appendChild(b);
+    b.addEventListener('click',e=>{ e.stopPropagation(); if(st.lbl.has(id)) st.lbl.delete(id); else st.lbl.add(id); b.setAttribute('aria-pressed',st.lbl.has(id));
+      try{localStorage.setItem('loan-lbl',JSON.stringify([...st.lbl]));}catch(_){} renderCharts(); }); });
   document.querySelectorAll('.chart-box').forEach(b=>{ const c=b.closest('.card'); if(!c) return; c.classList.add('zoomable');
     const e=document.createElement('button'); e.type='button'; e.className='enl'; e.setAttribute('data-noexport',''); e.setAttribute('aria-label','ขยายกราฟ'); e.textContent='⤢ ขยาย'; c.appendChild(e); });
   document.addEventListener('click',e=>{ if(e.target.closest('#zoom')) return; const c=e.target.closest('.card.zoomable'); if(!c) return; const cv=c.querySelector('canvas'); if(cv) openZoom(cv.id,c); });
