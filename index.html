@@ -208,6 +208,14 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
       <div class="pace-stats" id="paceStats"></div>
       <div class="chart-box"><canvas id="ch13" role="img" aria-label="กราฟเส้นยอดสะสมเทียบเป้าสะสม"></canvas></div><p class="note" id="n13"></p></div>
   </div>
+  <div class="grid" data-pdf="row8">
+    <div class="card"><h3 id="t15">สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย รายพื้นที่</h3><p class="cap" id="c15"></p><div class="chart-box tall"><canvas id="ch15" role="img" aria-label="กราฟจุด % ทั่วไปเทียบ % ปุ๋ย"></canvas></div><p class="note" id="n15"></p></div>
+    <div class="card"><h3 id="t16">ความสม่ำเสมอ: จำนวนเดือนที่ถึงเป้า</h3><p class="cap" id="c16"></p><div class="chart-box tall"><canvas id="ch16" role="img" aria-label="กราฟแท่งจำนวนพื้นที่ตามจำนวนเดือนที่ถึงเป้า"></canvas></div><p class="note" id="n16"></p></div>
+  </div>
+  <div class="grid" data-pdf="row9">
+    <div class="card"><h3 id="t17">การกระจายผลงานภายในภาค</h3><p class="cap" id="c17"></p><div class="chart-box tall"><canvas id="ch17" role="img" aria-label="กราฟกล่องการกระจาย % ทำได้รายภาค"></canvas></div><p class="note" id="n17"></p></div>
+    <div class="card"><h3 id="t18">เปลี่ยนแปลงจากเดือนก่อน</h3><p class="cap" id="c18"></p><div class="chart-box tall"><canvas id="ch18" role="img" aria-label="กราฟแท่งการเปลี่ยนแปลงจากเดือนก่อน"></canvas></div><p class="note" id="n18"></p></div>
+  </div>
   <section class="card" style="margin-top:8px" data-pdf="heat">
     <div class="tools"><div><h3 id="t14">Heatmap % ทำได้ รายพื้นที่ × เดือน</h3><p class="cap" id="c14" style="margin:0"></p></div>
       <div class="hm-legend" id="hmLegend"></div></div>
@@ -314,7 +322,7 @@ const valueLabels = {
       const meta=chart.getDatasetMeta(i); if(meta.hidden) return;
       meta.data.forEach((el,j)=>{ const v=ds.data[j]; if(v==null) return;
         const txt=opts.fmt(v,i,j);
-        if(chart.options.indexAxis==='y'){ ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(txt,el.x+4,el.y); }
+        if(chart.options.indexAxis==='y'){ const neg=v<0; ctx.textAlign=neg?'right':'left'; ctx.textBaseline='middle'; ctx.fillText(txt,neg?el.x-4:el.x+4,el.y); }
         else { ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(txt,el.x,el.y-3); }
       });});
     ctx.restore();
@@ -479,6 +487,9 @@ function insights(){
     if(A.gaps.length){ const s10=A.gaps.slice(0,10).reduce((s,x)=>s+x.gap,0); out.push(`ยอดขาดเป้ารวม <b>${M(A.gTot)} ล้านบาท</b> กระจุกตัว: 10 พื้นที่แรกคิดเป็น <b>${(s10/A.gTot*100).toFixed(0)}%</b> (เช่น ${A.gaps.slice(0,3).map(x=>x.name).join(', ')}) แก้กลุ่มนี้ได้ผลมากที่สุด`); }
     if(pc.remaining>0) out.push(`ต้องปล่อยเฉลี่ย <b>${M(pc.need)} ล้านบาท/เดือน</b> ในอีก ${pc.remaining} เดือนเพื่อถึงเป้าทั้งปี (ประมาณ ${M(pc.estAnnualT)} ล้านบาท) เทียบกับอัตราปัจจุบัน ${M(pc.runA)} ล้านบาท/เดือน · ถ้าอัตราเท่าเดิมจะจบปีที่ <b>${P(pc.estAnnualT?pc.projA/pc.estAnnualT:null)}</b> ของเป้า`);
     const risk=A.pts.filter(x=>x.q==='ต่ำกว่าเป้า · NPL สูง'); if(A.pts.length) out.push(`พื้นที่กลุ่มเสี่ยง (ต่ำกว่าเป้าและ NPL ≥ 10%) <b>${risk.length}</b> แห่ง${risk.length?': '+risk.sort((a,b)=>b.npl-a.npl).slice(0,4).map(x=>x.name).join(', '):''}`);
+    const B=analysis2(); const ofo=B.gf.filter(x=>x.q5==='อ่อนเฉพาะปุ๋ย');
+    if(B.gf.length) out.push(`พื้นที่ที่สินเชื่อทั่วไปถึงเป้าแต่ปุ๋ยไม่ถึง <b>${ofo.length}</b> แห่ง จาก ${B.gf.length} แห่ง (เช่น ${ofo.sort((a,b)=>a.pf-b.pf).slice(0,3).map(x=>x.name).join(', ')}) ชี้ว่าปัญหาอยู่ที่สินเชื่อปุ๋ยโดยเฉพาะ`);
+    if(B.mom&&B.mom.same&&B.mom.areas.length){ const u=B.mom.areas[0], d=B.mom.areas[B.mom.areas.length-1]; out.push(`เทียบ ${MS[B.mom.m0]}: พื้นที่ดีขึ้น ${B.mom.up} / แย่ลง ${B.mom.down} แห่ง · ดีขึ้นมากสุด <b>${u.name}</b> (+${(u.d*100).toFixed(0)} จุด) · แย่ลงมากสุด <b>${d.name}</b> (${(d.d*100).toFixed(0)} จุด)`); }
     const s3=A.rows.filter(r=>r.streak>=3); if(s3.length) out.push(`พื้นที่ต่ำกว่า 80% ติดต่อกัน 3 เดือนขึ้นไป <b>${s3.length}</b> แห่ง เช่น ${s3.slice(0,4).map(x=>x.name).join(', ')} ควรทบทวนเป้าหรือแผนงาน`);
   }
   $('insightList').innerHTML=out.map(x=>`<li>${x}</li>`).join('');
@@ -591,6 +602,10 @@ function exportXlsx(){
     addSheet('ยอดสะสมและคาดการณ์',S3,[34,16,16,16,16],[],[1,2,3,4]);
     const S4=[['รหัส','พื้นที่','ภาค',...AN.hm.map(m=>MS[m]),'ถึงเป้า (เดือน)','จำนวนเดือน','ต่ำกว่า 80% ติดกัน']];
     AN.rows.forEach(r=>S4.push([r.code,r.name,'ภาค '+r.region,...AN.hm.map(m=>n(r.v[m])),r.hit,r.n,r.streak]));
+    const B2=analysis2();
+    const S5=[['รหัส','พื้นที่','ภาค','% ทั่วไป','% ปุ๋ย','กลุ่ม']]; B2.gf.forEach(x=>S5.push([x.code,x.name,'ภาค '+x.region,x.pg,x.pf,x.q5])); addSheet('ทั่วไป เทียบ ปุ๋ย',S5,[11,26,9,10,10,20],[3,4]);
+    const S6=[['ภาค','จำนวนพื้นที่','ต่ำสุด','Q1','มัธยฐาน','Q3','สูงสุด','ผลรวมภาค']]; B2.box.forEach(b=>S6.push(['ภาค '+b.r,b.n,...[b.min,b.q1,b.med,b.q3,b.max].map(v=>v==null?'':v/100),n(b.agg)])); addSheet('การกระจายรายภาค',S6,[9,12,10,10,10,10,10,12],[2,3,4,5,6,7]);
+    if(B2.mom){ const S7=[['รหัส','พื้นที่','ภาค','% '+MS[B2.mom.m0],'% '+MS[B2.mom.m1],'เปลี่ยน (จุด %)']]; B2.mom.areas.forEach(x=>S7.push([x.code,x.name,'ภาค '+x.region,x.p0,x.p,x.d])); S7.push([]); B2.mom.regs.forEach(x=>S7.push(['','ภาค '+x.r,'',n(x.p0),n(x.p1),n(x.d)])); addSheet('เทียบเดือนก่อน',S7,[11,26,9,10,10,14],[3,4,5]); }
     addSheet('Heatmap รายพื้นที่',S4,[11,26,9,...AN.hm.map(()=>9),14,12,16],AN.hm.map((_,i)=>3+i));
   }
   // notes
@@ -717,6 +732,24 @@ async function exportPptx(){
     s.addChart(pptx.charts.LINE,[{name:'ยอดสะสม',labels:Lb,values:A1},{name:'เป้าสะสม',labels:Lb,values:T1},{name:'คาดการณ์',labels:Lb,values:PA},{name:'เป้าประมาณการ',labels:Lb,values:PT}],
       {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,TGT,'7FB0F5','C5C9D1'],lineSize:3,lineDataSymbolSize:6});
     take(s,pc.remaining>0?`ต้องปล่อยเฉลี่ย ${M(pc.need)} ล้านบาท/เดือน ในอีก ${pc.remaining} เดือน (อัตราปัจจุบัน ${M(pc.runA)}) · คาดการณ์สิ้นปี ${M(pc.projA)} ล้านบาท = ${P(pc.estAnnualT?pc.projA/pc.estAnnualT:null)} ของเป้าประมาณ ${M(pc.estAnnualT)} (เป้า ${MS12[pc.lastNo+1]}–ธ.ค. ประมาณจากค่าเฉลี่ย ${pc.k} เดือนล่าสุด)`:`ทั้งปีทำได้ ${M(pc.ytdA)} ล้านบาท`);
+    const B2=analysis2();
+    if(B2.gf.length){ s=pptx.addSlide(); head(s,'สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย รายพื้นที่',`${regLabel()} · ${mLabel()} · % ทำได้`);
+      const rg=[1,2,3,4].filter(r=>st.regions.has(r));
+      s.addChart(pptx.charts.SCATTER,[{name:'X',values:B2.gf.map(x=>+(x.pg*100).toFixed(1))},...rg.map(r=>({name:'ภาค '+r,values:B2.gf.map(x=>x.region===r?+(x.pf*100).toFixed(1):null)}))],
+        {x:0.5,y:1.4,w:8.2,h:4.8,...axisOpt,chartColors:rg.map(r=>RC[r-1]),lineSize:0,lineDataSymbolSize:8,valAxisLabelFormatCode:'0"%"',catAxisLabelFormatCode:'0"%"',showValAxisTitle:true,valAxisTitle:'% ปุ๋ย',showCatAxisTitle:true,catAxisTitle:'% ทั่วไป',valAxisTitleFontFace:FONT,catAxisTitleFontFace:FONT});
+      ['อ่อนทั้งสองประเภท','อ่อนเฉพาะปุ๋ย','อ่อนเฉพาะทั่วไป','ดีทั้งสองประเภท'].forEach((q,i)=>{const l=B2.gf.filter(x=>x.q5===q),y=1.45+i*1.2,cc=[RED,ORG,YEL,GRN][i];
+        s.addShape(pptx.ShapeType.rect,{x:8.95,y,w:0.12,h:1.05,fill:{color:cc},line:{color:cc}});
+        s.addText([{text:`${q}: ${l.length} แห่ง`,options:{bold:true,breakLine:true}},{text:l.slice(0,5).map(x=>x.name).join(', ')+(l.length>5?' …':''),options:{fontSize:10,color:GREY}}],{x:9.15,y,w:3.8,h:1.05,fontFace:FONT,fontSize:12,color:INK,valign:'top'});}); }
+    s=pptx.addSlide(); head(s,'ความสม่ำเสมอ และการกระจายผลงานภายในภาค',`${TYPES[t]} · ${regLabel()}`);
+    s.addChart(pptx.charts.BAR,[{name:'จำนวนพื้นที่',labels:B2.hist.map((_,i)=>`${i}/${B2.nMax}`),values:B2.hist.map(x=>x.length)}],{x:0.4,y:1.4,w:6.1,h:4.6,...axisOpt,showLegend:false,barDir:'col',chartColors:[BLUE],showValue:true,dataLabelFontSize:11,showCatAxisTitle:true,catAxisTitle:'จำนวนเดือนที่ถึงเป้า',catAxisTitleFontFace:FONT});
+    const bxr=B2.box.filter(b=>b.n);
+    s.addTable([[ 'ภาค','พื้นที่','ต่ำสุด','Q1','มัธยฐาน','Q3','สูงสุด','รวมภาค'].map(x=>({text:x,options:{bold:true,fill:{color:'F3F4F6'},align:'center'}})),...bxr.map(b=>[`ภาค ${b.r}`,String(b.n),...[b.min,b.q1,b.med,b.q3,b.max].map(v=>v.toFixed(0)+'%'),P(b.agg)].map(x=>({text:x,options:{align:'center'}})))],
+      {x:6.8,y:1.6,w:6.1,colW:[0.85,0.7,0.75,0.7,0.85,0.7,0.75,0.8],fontFace:FONT,fontSize:11,color:INK,border:{type:'solid',color:'E5E7EB',pt:0.5}});
+    s.addText(`ซ้าย: จำนวนพื้นที่ แยกตามจำนวนเดือนที่ถึงเป้า (${MS[B2.hm[0]]}–${MS[B2.hm[B2.hm.length-1]]}) · ขวา: การกระจาย % ทำได้รายพื้นที่ในแต่ละภาค (${mLabel()})`,{x:0.5,y:6.1,w:12.3,h:0.4,fontFace:FONT,fontSize:11,color:GREY});
+    if(B2.mom&&B2.mom.same&&B2.mom.areas.length){ const up=B2.mom.areas.filter(x=>x.d>0).slice(0,8), dn=B2.mom.areas.filter(x=>x.d<0).slice(-8), li=[...up,...dn];
+      s=pptx.addSlide(); head(s,`เปลี่ยนแปลงจากเดือนก่อน · ${MF[B2.mom.m1]} เทียบ ${MF[B2.mom.m0]}`,`${TYPES[t]} · ${regLabel()} · จุด % ที่เปลี่ยน`);
+      s.addChart(pptx.charts.BAR,[{name:'เปลี่ยนแปลง',labels:li.map(x=>x.name),values:li.map(x=>+(x.d*100).toFixed(1))}],{x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[GRN],invertedColors:[RED],showValue:true,dataLabelFormatCode:'+0;-0',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
+      take(s,'ระดับภาค: '+B2.mom.regs.map(x=>`ภาค ${x.r} ${x.d==null?'–':(x.d>=0?'+':'')+(x.d*100).toFixed(1)+' จุด'}`).join(' · ')+` · พื้นที่ดีขึ้น ${B2.mom.up} / แย่ลง ${B2.mom.down}`); }
     // D heatmap (worst 18)
     const hr=AN.rows.slice(0,18), cell=v=>v==null?'FFFFFF':v>=1?'CDEBDD':v>=.8?'F6E3C1':v>=.5?'F9D6C6':'F5C6C6';
     s=pptx.addSlide(); head(s,'พื้นที่ที่ต้องติดตาม: % ทำได้รายเดือน',`${TYPES[t]} · ${regLabel()} · 18 พื้นที่ที่ต่ำกว่า 80% ติดต่อกันนานที่สุด`);
@@ -786,10 +819,11 @@ const quadLines={id:'quadLines',afterDatasetsDraw(chart,_a,o){
   if(px>=ca.left&&px<=ca.right){ctx.beginPath();ctx.moveTo(px,ca.top);ctx.lineTo(px,ca.bottom);ctx.stroke();}
   if(py>=ca.top&&py<=ca.bottom){ctx.beginPath();ctx.moveTo(ca.left,py);ctx.lineTo(ca.right,py);ctx.stroke();}
   ctx.setLineDash([]); ctx.font='600 11px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle=o.ink;
-  ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillText('ต่ำกว่าเป้า · NPL สูง (เสี่ยง)',ca.left+6,ca.top+4);
-  ctx.textAlign='right'; ctx.fillText('ถึงเป้า · NPL สูง (เฝ้าระวังคุณภาพ)',ca.right-6,ca.top+4);
-  ctx.textBaseline='bottom'; ctx.textAlign='left'; ctx.fillText('ต่ำกว่าเป้า · NPL ต่ำ (เร่งยอด)',ca.left+6,ca.bottom-4);
-  ctx.textAlign='right'; ctx.fillText('ถึงเป้า · NPL ต่ำ (ดี)',ca.right-6,ca.bottom-4); ctx.restore(); }};
+  const L=o.labels||['ต่ำกว่าเป้า · NPL สูง (เสี่ยง)','ถึงเป้า · NPL สูง (เฝ้าระวังคุณภาพ)','ต่ำกว่าเป้า · NPL ต่ำ (เร่งยอด)','ถึงเป้า · NPL ต่ำ (ดี)'];
+  ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillText(L[0],ca.left+6,ca.top+4);
+  ctx.textAlign='right'; ctx.fillText(L[1],ca.right-6,ca.top+4);
+  ctx.textBaseline='bottom'; ctx.textAlign='left'; ctx.fillText(L[2],ca.left+6,ca.bottom-4);
+  ctx.textAlign='right'; ctx.fillText(L[3],ca.right-6,ca.bottom-4); ctx.restore(); }};
 Chart.register(quadLines);
 function renderAnalysis(){
   const th=theme(), t=st.type, A=analysis();
@@ -841,6 +875,85 @@ function renderAnalysis(){
   $('n14').textContent=`ต่ำกว่า 80% ติดต่อกันตั้งแต่ 3 เดือนขึ้นไป ${s3} พื้นที่ · ไม่เคยถึงเป้าเลยในช่วงนี้ ${never} พื้นที่ จาก ${A.rows.length} พื้นที่`;
 }
 const __rc0=renderCharts; renderCharts=function(){ __rc0(); if(DATA.length) renderAnalysis(); };
+
+/* ---------- analysis 5-8 ---------- */
+function quant(a,q){ if(!a.length) return null; const s=[...a].sort((x,y)=>x-y), pos=(s.length-1)*q, b=Math.floor(pos); return s[b+1]!==undefined?s[b]+(s[b+1]-s[b])*(pos-b):s[b]; }
+function analysis2(){
+  const t=st.type, as=areaStats(0,t), A=analysis();
+  // 5 gen vs fert
+  const gf=as.filter(x=>x.pg!=null&&x.pf!=null);
+  const q5=x=>x.pg>=1?(x.pf>=1?'ดีทั้งสองประเภท':'อ่อนเฉพาะปุ๋ย'):(x.pf>=1?'อ่อนเฉพาะทั่วไป':'อ่อนทั้งสองประเภท');
+  gf.forEach(x=>x.q5=q5(x));
+  // 6 consistency
+  const nMax=A.hm.length, hist=Array(nMax+1).fill(0).map(()=>[]);
+  A.rows.filter(r=>r.n).forEach(r=>hist[Math.min(r.hit,nMax)].push(r));
+  // 7 box per region
+  const box=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>{const v=as.filter(x=>x.region===r).map(x=>x.p*100);
+    return {r,n:v.length,min:v.length?Math.min(...v):null,q1:quant(v,.25),med:quant(v,.5),q3:quant(v,.75),max:v.length?Math.max(...v):null,agg:agg(selRows(r),t).p};});
+  // 8 month over month
+  const m1=st.month, m0=m1-1; let mom=null;
+  if(m0>=0){
+    const pm=m=>{const mp=new Map(); rowsOf(m).forEach(r=>{const T=tv(r,t); if(T>0) mp.set(r[3],{code:r[3],name:r[4],region:r[1],p:av(r,t)/T});}); return mp;};
+    const a=pm(m0), b=pm(m1), same=STRUCT[m0]===STRUCT[m1];
+    const areas=same?[...b.values()].filter(x=>a.has(x.code)).map(x=>({...x,p0:a.get(x.code).p,d:x.p-a.get(x.code).p})):[];
+    areas.sort((x,y)=>y.d-x.d);
+    const regs=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>{const p0=agg(rowsOf(m0,r),t).p,p1=agg(rowsOf(m1,r),t).p;return {r,p0,p1,d:p0!=null&&p1!=null?p1-p0:null};});
+    mom={m0,m1,same,areas,regs,up:areas.filter(x=>x.d>0).length,down:areas.filter(x=>x.d<0).length};
+  }
+  return {gf,hist,nMax,hm:A.hm,box,mom};
+}
+function renderAnalysis2(){
+  const th=theme(), t=st.type, B=analysis2();
+  /* 15 gen vs fert scatter */
+  const regs=[1,2,3,4].filter(r=>st.regions.has(r));
+  $('c15').textContent=`${regLabel()} · ${mLabel()} · แกนนอน = % ทำได้ สินเชื่อทั่วไป · แกนตั้ง = % ทำได้ สินเชื่อปุ๋ย · เส้นประ = เป้า 100%`;
+  mk('ch15',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,data:B.gf.filter(x=>x.region===r).map(x=>({x:+(x.pg*100).toFixed(1),y:+(x.pf*100).toFixed(1),n:x.name,c:x.code})),backgroundColor:hexA(th.s[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
+    options:{plugins:{legend:legend(th),quadLines:{x:100,y:100,color:th.target,ink:th.ink2,labels:['อ่อนเฉพาะทั่วไป','ดีทั้งสองประเภท','อ่อนทั้งสองประเภท','อ่อนเฉพาะปุ๋ย']},tooltip:tipBase(th,{callbacks:{title:i=>`${i[0].raw.c} ${i[0].raw.n}`,label:c=>[`ทั่วไป ${c.raw.x.toFixed(1)}%`,`ปุ๋ย ${c.raw.y.toFixed(1)}%`]}})},
+      scales:{x:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ สินเชื่อทั่วไป',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ สินเชื่อปุ๋ย',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+  const cnt=q=>B.gf.filter(x=>x.q5===q).length;
+  $('n15').textContent=B.gf.length?`อ่อนเฉพาะปุ๋ย ${cnt('อ่อนเฉพาะปุ๋ย')} · อ่อนทั้งสองประเภท ${cnt('อ่อนทั้งสองประเภท')} · อ่อนเฉพาะทั่วไป ${cnt('อ่อนเฉพาะทั่วไป')} · ดีทั้งสองประเภท ${cnt('ดีทั้งสองประเภท')} พื้นที่ (เฉพาะพื้นที่ที่มีเป้าทั้งสองประเภท)`:'ไม่มีพื้นที่ที่มีเป้าทั้งสองประเภท';
+  /* 16 consistency */
+  const H=B.hist, labels=H.map((_,i)=>`${i}/${B.nMax}`), cols=H.map((_,i)=>{const f=B.nMax?i/B.nMax:0;return f>=.7?th.good:f>=.4?th.warn:th.bad;});
+  $('c16').textContent=`${TYPES[t]} · ${regLabel()} · ${MS[B.hm[0]]}–${MS[B.hm[B.hm.length-1]]} · จำนวนพื้นที่ แยกตามจำนวนเดือนที่ทำได้ ≥ 100%`;
+  mk('ch16',{type:'bar',data:{labels,datasets:[{label:'จำนวนพื้นที่',data:H.map(x=>x.length),backgroundColor:cols,borderRadius:5,maxBarThickness:56}]},
+    options:{plugins:{legend:{display:false},valueLabels:{fmt:v=>v?v+' แห่ง':''},tooltip:tipBase(th,{callbacks:{title:i=>`ถึงเป้า ${labels[i[0].dataIndex]} เดือน`,label:c=>`${c.parsed.y} พื้นที่`,afterBody:i=>{const l=H[i[0].dataIndex];return l.slice(0,8).map(x=>'· '+x.name).concat(l.length>8?[`… อีก ${l.length-8} แห่ง`]:[]);}}})},
+      scales:{x:Object.assign(axisBase(th),{grid:{display:false},title:{display:true,text:'จำนวนเดือนที่ถึงเป้า',color:th.ink2}}),y:Object.assign(axisBase(th),{beginAtZero:true,grace:'15%',ticks:{color:th.ink2,precision:0}})}}});
+  const top=H[B.nMax]||[], strong=H.slice(Math.ceil(B.nMax*.7)).flat();
+  $('n16').textContent=`ถึงเป้าทุกเดือน ${top.length} พื้นที่${top.length?' ('+top.slice(0,5).map(x=>x.name).join(', ')+(top.length>5?' …':'')+')':''} · ถึงเป้า ≥ 70% ของเดือน ${strong.length} พื้นที่ · ไม่เคยถึงเป้า ${H[0].length} พื้นที่`;
+  /* 17 box plot */
+  const bx=B.box.filter(b=>b.n);
+  $('c17').textContent=`${TYPES[t]} · ${mLabel()} · % ทำได้รายพื้นที่ · กล่อง = ช่วงกลาง 50% (Q1–Q3) · ขีดกลาง = มัธยฐาน · เส้นบาง = ต่ำสุด–สูงสุด · ◆ = ผลรวมภาค`;
+  mk('ch17',{data:{labels:bx.map(b=>`ภาค ${b.r} (${b.n} แห่ง)`),datasets:[
+    {type:'bar',label:'ต่ำสุด–สูงสุด',data:bx.map(b=>[b.min,b.max]),backgroundColor:bx.map(b=>th.s[b.r-1]),barThickness:2,grouped:false,noLabel:true},
+    {type:'bar',label:'Q1–Q3',data:bx.map(b=>[b.q1,b.q3]),backgroundColor:bx.map(b=>hexA(th.s[b.r-1],.35)),borderColor:bx.map(b=>th.s[b.r-1]),borderWidth:1.5,borderSkipped:false,barThickness:44,grouped:false,noLabel:true},
+    {type:'line',label:'มัธยฐาน',data:bx.map(b=>b.med),showLine:false,pointStyle:'line',pointRadius:22,pointBorderWidth:3,borderColor:th.ink,backgroundColor:th.ink},
+    {type:'line',label:'ผลรวมภาค',data:bx.map(b=>b.agg==null?null:b.agg*100),showLine:false,pointStyle:'rectRot',pointRadius:6,backgroundColor:th.surface,borderColor:th.ink,pointBorderWidth:2},
+    {type:'line',label:'เป้า 100%',data:bx.map(()=>100),borderColor:th.target,borderDash:[6,4],borderWidth:1.5,pointRadius:0}]},
+    options:{plugins:{legend:legend(th),tooltip:tipBase(th,{mode:'index',intersect:false,filter:i=>i.datasetIndex===0,callbacks:{label:c=>{const b=bx[c.dataIndex];return [`ต่ำสุด ${b.min.toFixed(0)}% · สูงสุด ${b.max.toFixed(0)}%`,`Q1 ${b.q1.toFixed(0)}% · มัธยฐาน ${b.med.toFixed(0)}% · Q3 ${b.q3.toFixed(0)}%`,`ผลรวมภาค ${P(b.agg)} · ช่วงกลางกว้าง ${(b.q3-b.q1).toFixed(0)} จุด`];}}})},
+      scales:{x:Object.assign(axisBase(th),{grid:{display:false}}),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+  const wide=[...bx].sort((a,b)=>(b.q3-b.q1)-(a.q3-a.q1))[0];
+  $('n17').textContent=bx.length?`ภาคที่ผลงานภายในต่างกันมากที่สุด: ภาค ${wide.r} (ช่วงกลาง ${wide.q1.toFixed(0)}–${wide.q3.toFixed(0)}%, ต่ำสุด ${wide.min.toFixed(0)}% ถึงสูงสุด ${wide.max.toFixed(0)}%) · ภาคที่มัธยฐานต่ำกว่าผลรวมมาก แปลว่าพื้นที่ส่วนใหญ่ต่ำ แต่มีบางพื้นที่ดึงยอดขึ้น`:'';
+  /* 18 MoM */
+  const mo=B.mom;
+  if(!mo){ $('c18').textContent='เลือกเดือนแรกของไฟล์อยู่ จึงไม่มีเดือนก่อนให้เทียบ'; mk('ch18',{type:'bar',data:{labels:[],datasets:[{data:[]}]},options:{plugins:{legend:{display:false}}}}); $('n18').textContent=''; }
+  else{
+    $('t18').textContent=`เปลี่ยนแปลงจากเดือนก่อน · ${MF[mo.m1]} เทียบ ${MF[mo.m0]}`;
+    if(mo.same && mo.areas.length){
+      const up=mo.areas.filter(x=>x.d>0).slice(0,8), dn=mo.areas.filter(x=>x.d<0).slice(-8);
+      const list=[...up,...dn];
+      $('c18').textContent=`${TYPES[t]} · ${regLabel()} · % ทำได้ที่เปลี่ยน (จุด) · ดีขึ้นมากสุด 8 และแย่ลงมากสุด 8 พื้นที่`;
+      mk('ch18',{type:'bar',data:{labels:list.map(x=>`${x.name} (ภ.${x.region})`),datasets:[{label:'เปลี่ยนแปลง',data:list.map(x=>+(x.d*100).toFixed(1)),backgroundColor:list.map(x=>x.d>=0?th.good:th.bad),borderRadius:4,barThickness:12}]},
+        options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:v=>(v>0?'+':'')+v.toFixed(0)},tooltip:tipBase(th,{callbacks:{title:i=>list[i[0].dataIndex].code+' '+list[i[0].dataIndex].name,label:c=>{const x=list[c.dataIndex];return [`${MS[mo.m0]} ${P(x.p0)} → ${MS[mo.m1]} ${P(x.p)}`,`${x.d>=0?'+':''}${(x.d*100).toFixed(1)} จุด`];}}})},
+          scales:{x:Object.assign(axisBase(th),{grace:'12%',title:{display:true,text:'จุด % (percentage points)',color:th.ink2}}),y:Object.assign(axisBase(th),{grid:{display:false}})}}});
+    } else {
+      $('c18').textContent=`${TYPES[t]} · โครงสร้างพื้นที่เปลี่ยนระหว่าง 2 เดือนนี้ จึงแสดงระดับภาค · % ทำได้ที่เปลี่ยน (จุด)`;
+      mk('ch18',{type:'bar',data:{labels:mo.regs.map(x=>'ภาค '+x.r),datasets:[{label:'เปลี่ยนแปลง',data:mo.regs.map(x=>x.d==null?null:+(x.d*100).toFixed(1)),backgroundColor:mo.regs.map(x=>(x.d||0)>=0?th.good:th.bad),borderRadius:4,maxBarThickness:60}]},
+        options:{plugins:{legend:{display:false},valueLabels:{fmt:v=>(v>0?'+':'')+v.toFixed(1)}},scales:{x:Object.assign(axisBase(th),{grid:{display:false}}),y:Object.assign(axisBase(th),{grace:'15%'})}}});
+    }
+    $('n18').textContent='ระดับภาค: '+mo.regs.map(x=>`ภาค ${x.r} ${x.d==null?'–':(x.d>=0?'+':'')+(x.d*100).toFixed(1)+' จุด'}`).join(' · ')+(mo.same?` · พื้นที่ดีขึ้น ${mo.up} / แย่ลง ${mo.down}`:'');
+  }
+}
+const __rc1=renderCharts; renderCharts=function(){ __rc1(); if(DATA.length) renderAnalysis2(); };
 const SKINS=[['auto','ตามระบบ (อัตโนมัติ)'],['blue','ฟ้าคลาสสิก'],['green','เขียวเกษตร'],['warm','ส้มอุ่น'],['purple','ม่วงสงบ'],['night','กลางคืน (มืด)'],['emerald','มรกตมืด'],['mono','ขาวดำ (เหมาะกับพิมพ์)']];
 function applySkin(v,redraw){ const h=document.documentElement; if(v==='auto') h.removeAttribute('data-skin'); else h.setAttribute('data-skin',v);
   try{localStorage.setItem('loan-skin',v);}catch(e){} if(redraw) renderCharts(); }
@@ -881,12 +994,14 @@ function parseWorkbookRows(aoa){
     const mi=MONTH_ALIAS.get(mraw.replace(/\./g,'')); if(mi==null){bad.add(mraw);continue;}
     const rg=parseInt(String(r[C.reg]).replace(/\D/g,''),10); if(!(rg>=1&&rg<=4)){bad.add('ภาค:'+r[C.reg]);continue;}
     const sp=areaRaw.split(/\s+/); const hasCode=sp.length>1&&/^[\d-]+$/.test(sp[0]);
-    const code=areaRaw===''?grpRaw:hasCode?sp[0]:(grpRaw||areaRaw), name=areaRaw===''?'(ไม่ระบุชื่อ) '+grpRaw:hasCode?sp.slice(1).join(' '):areaRaw;
+    const grpCode=/^\d{5}$/.test(grpRaw)?`${grpRaw[0]}-${grpRaw.slice(1,3)}-${grpRaw.slice(3)}`:grpRaw;
+    const code=areaRaw===''?grpCode:hasCode?sp[0]:(grpRaw||areaRaw), name=areaRaw===''?'(ไม่ระบุชื่อ) '+grpRaw:hasCode?sp.slice(1).join(' '):areaRaw;
     const z=r[C.zone]==null?'':String(r[C.zone]).replace(/\D/g,'');
     const npl=r[C.npl]==null||r[C.npl]===''?null:numOf(r[C.npl]);
     tmp.push([mi,rg,z,code,name,Math.round(numOf(r[C.t1])),Math.round(numOf(r[C.a1])),Math.round(numOf(r[C.t2])),Math.round(numOf(r[C.a2])),npl]);
   }
   if(!tmp.length) throw new Error('ไม่พบแถวข้อมูลที่อ่านได้'+(bad.size?` (ค่าที่ไม่รู้จัก: ${[...bad].slice(0,5).join(', ')})`:''));
+  const nameOf=new Map(); tmp.forEach(r=>{ if(!r[4].startsWith('(ไม่ระบุชื่อ)')) nameOf.set(r[3],r[4]); }); tmp.forEach(r=>{ if(r[4].startsWith('(ไม่ระบุชื่อ)')&&nameOf.has(r[3])) r[4]=nameOf.get(r[3]); });
   const mno=[...new Set(tmp.map(r=>r[0]))].sort((a,b)=>a-b);
   let mx=0; tmp.forEach(r=>{if(r[9]!=null&&r[9]>mx)mx=r[9];}); if(mx>1) tmp.forEach(r=>{if(r[9]!=null)r[9]=r[9]/100;});
   tmp.forEach(r=>{r[0]=mno.indexOf(r[0]); if(r[9]!=null) r[9]=Math.round(r[9]*1e5)/1e5;});
