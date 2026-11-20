@@ -329,7 +329,9 @@ const valueLabels = {
   }
 };
 Chart.register(valueLabels);
-function theme(){ return {ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
+const REG_LIGHT=['#0b6b30','#f5c400','#1a9fdc','#6833ad'], REG_DARK=['#1f8a45','#ffd21f','#2f9fe0','#8656d4'], RPS=['circle','triangle','rect','rectRot'];
+function isDarkBg(){ const h=css('--bg').replace('#',''); if(h.length<6) return false; const n=parseInt(h.slice(0,6),16); return (0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))<128; }
+function theme(){ return {r:isDarkBg()?REG_DARK:REG_LIGHT,ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
 function mk(id,cfg){
   if(charts[id]) charts[id].destroy();
   const th=theme();
@@ -358,7 +360,7 @@ function renderCharts(){
 
   /* 2 % by region */
   $('c2').textContent=`${TYPES[t]} · เส้นจุด = รวมภาคที่เลือก · เส้นประ = เป้า 100%`;
-  const rds=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,data:monthSeries(t,r).map(x=>x.p==null?null:x.p*100),borderColor:th.s[r-1],backgroundColor:th.s[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:st.regions.has(r)?4:2,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.25}));
+  const rds=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,pointStyle:RPS[r-1],data:monthSeries(t,r).map(x=>x.p==null?null:x.p*100),borderColor:th.r[r-1],backgroundColor:th.r[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:st.regions.has(r)?4:2,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.25}));
   rds.push({label:'รวมภาคที่เลือก',data:ms.map(x=>x.p==null?null:x.p*100),borderColor:th.ink,borderWidth:2,borderDash:[2,3],pointRadius:0,tension:.25});
   rds.push({label:'เป้า 100%',data:MS.map(()=>100),borderColor:th.target,borderDash:[6,4],borderWidth:1.5,pointRadius:0});
   mk('ch2',{type:'line',data:{labels:MS,datasets:rds},options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}})},scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
@@ -424,7 +426,7 @@ function renderCharts(){
 
   /* 9 NPL by region */
   const nm=nplMonths(); $('c9').textContent=nm.length?`มีข้อมูลตั้งแต่ ${nplFrom()} ${YEAR} · ค่าเฉลี่ยรายพื้นที่ (ไม่ถ่วงน้ำหนัก)`:'ไฟล์นี้ไม่มีข้อมูล NPL';
-  mk('ch9',{type:'line',data:{labels:nm.map(m=>MS[m]),datasets:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,data:nm.map(m=>{const a=nplRows(m,r).map(x=>x[9]);const v=avg(a);return v==null?null:v*100;}),borderColor:th.s[r-1],backgroundColor:th.s[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:5,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.2}))},
+  mk('ch9',{type:'line',data:{labels:nm.map(m=>MS[m]),datasets:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,pointStyle:RPS[r-1],data:nm.map(m=>{const a=nplRows(m,r).map(x=>x[9]);const v=avg(a);return v==null?null:v*100;}),borderColor:th.r[r-1],backgroundColor:th.r[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:5,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.2}))},
     options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)}%`}})},scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
 
   /* 10 top NPL areas */
@@ -434,7 +436,7 @@ function renderCharts(){
   else{
     const nr=nplRows(nmo).sort((a,b)=>b[9]-a[9]).slice(0,10);
     $('t10').textContent=`10 พื้นที่ NPL สูงสุด · ${MF[nmo]}`; $('c10').textContent=`${regLabel()} · สีแท่งตามภาค · เกิน 10% ถือว่าเฝ้าระวัง`;
-    mk('ch10',{type:'bar',data:{labels:nr.map(r=>`${r[4]} (ภ.${r[1]})`),datasets:[{data:nr.map(r=>r[9]*100),backgroundColor:nr.map(r=>th.s[r[1]-1]),borderRadius:4,barThickness:16}]},
+    mk('ch10',{type:'bar',data:{labels:nr.map(r=>`${r[4]} (ภ.${r[1]})`),datasets:[{data:nr.map(r=>r[9]*100),backgroundColor:nr.map(r=>th.r[r[1]-1]),borderRadius:4,barThickness:16}]},
       options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:v=>v.toFixed(1)+'%'},tooltip:tipBase(th,{callbacks:{label:c=>`NPL ${c.parsed.x.toFixed(2)}%`}})},scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'15%',ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:36}}}});
   }
 }
@@ -619,7 +621,7 @@ function exportXlsx(){
 async function exportPptx(){
   const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; // 13.33 x 7.5
   const FONT='Tahoma', INK='1F2937', GREY='6B7280', BLUE='2A78D6', ORG='EB6834', AQ='1BAF7A', YEL='EDA100', TGT='8A909C', RED='D23B3A', GRN='0B8A55';
-  const RC=[BLUE,ORG,AQ,YEL];
+  const RC=['0B6B30','F5C400','1A9FDC','6833AD'];
   const f=st.month, t=st.type, reg=0, v=computeView(), ins=insights();
   const head=(s,title,sub)=>{ s.background={color:'FFFFFF'}; s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:0.12,fill:{color:BLUE}});
     s.addText(title,{x:0.5,y:0.3,w:12.3,h:0.6,fontFace:FONT,fontSize:24,bold:true,color:INK});
@@ -830,7 +832,7 @@ function renderAnalysis(){
   /* 11 scatter */
   $('c11').textContent=`${TYPES[t]} · ${regLabel()} · แกนนอน = % ทำได้ (${mLabel()}) · แกนตั้ง = NPL ${A.nplSrc||''} · เส้นประ = เป้า 100% และ NPL 10%`;
   const regs=[1,2,3,4].filter(r=>st.regions.has(r));
-  mk('ch11',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,data:A.pts.filter(x=>x.region===r).map(x=>({x:+(x.p*100).toFixed(1),y:+(x.npl*100).toFixed(2),n:x.name,c:x.code})),backgroundColor:hexA(th.s[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
+  mk('ch11',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,pointStyle:RPS[r-1],data:A.pts.filter(x=>x.region===r).map(x=>({x:+(x.p*100).toFixed(1),y:+(x.npl*100).toFixed(2),n:x.name,c:x.code})),backgroundColor:hexA(th.r[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
     options:{plugins:{legend:legend(th),quadLines:{x:100,y:10,color:th.target,ink:th.ink2},tooltip:tipBase(th,{callbacks:{title:i=>{const d=i[0].raw;return `${d.c} ${d.n}`;},label:c=>[`ทำได้ ${c.raw.x.toFixed(1)}% ของเป้า`,`NPL ${c.raw.y.toFixed(2)}%`]}})},
       scales:{x:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ตามเป้า',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'NPL',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
   const risk=A.pts.filter(x=>x.q==='ต่ำกว่าเป้า · NPL สูง').sort((a,b)=>b.npl-a.npl);
@@ -907,7 +909,7 @@ function renderAnalysis2(){
   /* 15 gen vs fert scatter */
   const regs=[1,2,3,4].filter(r=>st.regions.has(r));
   $('c15').textContent=`${regLabel()} · ${mLabel()} · แกนนอน = % ทำได้ สินเชื่อทั่วไป · แกนตั้ง = % ทำได้ สินเชื่อปุ๋ย · เส้นประ = เป้า 100%`;
-  mk('ch15',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,data:B.gf.filter(x=>x.region===r).map(x=>({x:+(x.pg*100).toFixed(1),y:+(x.pf*100).toFixed(1),n:x.name,c:x.code})),backgroundColor:hexA(th.s[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
+  mk('ch15',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,pointStyle:RPS[r-1],data:B.gf.filter(x=>x.region===r).map(x=>({x:+(x.pg*100).toFixed(1),y:+(x.pf*100).toFixed(1),n:x.name,c:x.code})),backgroundColor:hexA(th.r[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
     options:{plugins:{legend:legend(th),quadLines:{x:100,y:100,color:th.target,ink:th.ink2,labels:['อ่อนเฉพาะทั่วไป','ดีทั้งสองประเภท','อ่อนทั้งสองประเภท','อ่อนเฉพาะปุ๋ย']},tooltip:tipBase(th,{callbacks:{title:i=>`${i[0].raw.c} ${i[0].raw.n}`,label:c=>[`ทั่วไป ${c.raw.x.toFixed(1)}%`,`ปุ๋ย ${c.raw.y.toFixed(1)}%`]}})},
       scales:{x:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ สินเชื่อทั่วไป',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ สินเชื่อปุ๋ย',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
   const cnt=q=>B.gf.filter(x=>x.q5===q).length;
@@ -924,8 +926,8 @@ function renderAnalysis2(){
   const bx=B.box.filter(b=>b.n);
   $('c17').textContent=`${TYPES[t]} · ${mLabel()} · % ทำได้รายพื้นที่ · กล่อง = ช่วงกลาง 50% (Q1–Q3) · ขีดกลาง = มัธยฐาน · เส้นบาง = ต่ำสุด–สูงสุด · ◆ = ผลรวมภาค`;
   mk('ch17',{data:{labels:bx.map(b=>`ภาค ${b.r} (${b.n} แห่ง)`),datasets:[
-    {type:'bar',label:'ต่ำสุด–สูงสุด',data:bx.map(b=>[b.min,b.max]),backgroundColor:bx.map(b=>th.s[b.r-1]),barThickness:2,grouped:false,noLabel:true},
-    {type:'bar',label:'Q1–Q3',data:bx.map(b=>[b.q1,b.q3]),backgroundColor:bx.map(b=>hexA(th.s[b.r-1],.35)),borderColor:bx.map(b=>th.s[b.r-1]),borderWidth:1.5,borderSkipped:false,barThickness:44,grouped:false,noLabel:true},
+    {type:'bar',label:'ต่ำสุด–สูงสุด',data:bx.map(b=>[b.min,b.max]),backgroundColor:bx.map(b=>th.r[b.r-1]),barThickness:2,grouped:false,noLabel:true},
+    {type:'bar',label:'Q1–Q3',data:bx.map(b=>[b.q1,b.q3]),backgroundColor:bx.map(b=>hexA(th.r[b.r-1],.35)),borderColor:bx.map(b=>th.r[b.r-1]),borderWidth:1.5,borderSkipped:false,barThickness:44,grouped:false,noLabel:true},
     {type:'line',label:'มัธยฐาน',data:bx.map(b=>b.med),showLine:false,pointStyle:'line',pointRadius:22,pointBorderWidth:3,borderColor:th.ink,backgroundColor:th.ink},
     {type:'line',label:'ผลรวมภาค',data:bx.map(b=>b.agg==null?null:b.agg*100),showLine:false,pointStyle:'rectRot',pointRadius:6,backgroundColor:th.surface,borderColor:th.ink,pointBorderWidth:2},
     {type:'line',label:'เป้า 100%',data:bx.map(()=>100),borderColor:th.target,borderDash:[6,4],borderWidth:1.5,pointRadius:0}]},
