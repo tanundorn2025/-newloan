@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard ยอดปล่อยสินเชื่อ ปี 2569</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Plan: ink-blue on warm-grey surface; 4 region hues from validated categorical order; layout = sticky filter bar, KPI row, insights, chart grid, detail table */
+:root{
+  color-scheme: light;
+  --bg:#f3f4f6; --surface:#ffffff; --ink:#111827; --ink2:#4b5563; --muted:#6b7280; --line:#e5e7eb; --grid:#e8eaee;
+  --accent:#1f4f99; --accent-soft:#e8eff9; --on-accent:#ffffff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --target:#8a909c;
+  --good:#0b8a55; --warn:#b7791f; --bad:#d23b3a;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#111214; --surface:#1a1b1e; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9a93; --line:#2e3036; --grid:#2a2c31;
+    --accent:#7fb0f5; --accent-soft:#1f2a3b; --on-accent:#0b1320;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --target:#8a909c;
+    --good:#34c58a; --warn:#e0a63a; --bad:#e66767; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#111214; --surface:#1a1b1e; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a9a93; --line:#2e3036; --grid:#2a2c31;
+  --accent:#7fb0f5; --accent-soft:#1f2a3b; --on-accent:#0b1320;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --target:#8a909c;
+  --good:#34c58a; --warn:#e0a63a; --bad:#e66767; --shadow:none;
+}
+
+/* ---- themes: each sets the full token set; series order stays on the validated hue order ---- */
+html:root[data-skin="blue"]{color-scheme:light;--bg:#f3f4f6;--surface:#fff;--ink:#111827;--ink2:#4b5563;--muted:#6b7280;--line:#e5e7eb;--grid:#e8eaee;--accent:#1f4f99;--accent-soft:#e8eff9;--on-accent:#fff;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--target:#8a909c;--good:#0b8a55;--warn:#b7791f;--bad:#d23b3a;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08)}
+html:root[data-skin="green"]{color-scheme:light;--bg:#eff5ef;--surface:#fff;--ink:#14231a;--ink2:#41564a;--muted:#62756a;--line:#d9e5dc;--grid:#e3ece5;--accent:#0f6b3a;--accent-soft:#e1f1e6;--on-accent:#fff;--s1:#0c8a4a;--s2:#eb6834;--s3:#2a78d6;--s4:#eda100;--target:#7f8c84;--good:#0b8a55;--warn:#b7791f;--bad:#d23b3a;--shadow:0 1px 2px rgba(16,40,24,.07),0 1px 3px rgba(16,40,24,.08)}
+html:root[data-skin="warm"]{color-scheme:light;--bg:#f8f2e9;--surface:#fffdf9;--ink:#2b2118;--ink2:#5e4e41;--muted:#7d6c5d;--line:#eadfd0;--grid:#f0e7da;--accent:#b8430c;--accent-soft:#fbe8d6;--on-accent:#fff;--s1:#d9531e;--s2:#2a78d6;--s3:#1baf7a;--s4:#c98500;--target:#9a8f84;--good:#0b8a55;--warn:#a86a0f;--bad:#c53030;--shadow:0 1px 2px rgba(60,40,20,.07),0 1px 3px rgba(60,40,20,.08)}
+html:root[data-skin="purple"]{color-scheme:light;--bg:#f3f1fa;--surface:#fff;--ink:#1d1a33;--ink2:#4d4a6a;--muted:#6c6987;--line:#e3dff2;--grid:#ebe8f6;--accent:#5b45c9;--accent-soft:#ece8fb;--on-accent:#fff;--s1:#6250d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--target:#8d8aa3;--good:#0b8a55;--warn:#b7791f;--bad:#d23b3a;--shadow:0 1px 2px rgba(40,30,90,.07),0 1px 3px rgba(40,30,90,.08)}
+html:root[data-skin="night"]{color-scheme:dark;--bg:#0e1320;--surface:#161d2e;--ink:#eef2fa;--ink2:#b9c3d8;--muted:#8d99b3;--line:#27324a;--grid:#242d42;--accent:#7fb0f5;--accent-soft:#1d2a42;--on-accent:#0b1320;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--target:#7f8aa3;--good:#34c58a;--warn:#e0a63a;--bad:#e66767;--shadow:none}
+html:root[data-skin="emerald"]{color-scheme:dark;--bg:#0c1511;--surface:#13201a;--ink:#e9f5ee;--ink2:#b3c9bc;--muted:#86a095;--line:#233a30;--grid:#1f332a;--accent:#4fd1a1;--accent-soft:#17302a;--on-accent:#06150f;--s1:#19b47a;--s2:#e8703b;--s3:#3987e5;--s4:#d99400;--target:#7d968a;--good:#34c58a;--warn:#e0a63a;--bad:#ee6f6f;--shadow:none}
+html:root[data-skin="mono"]{color-scheme:light;--bg:#ededed;--surface:#fff;--ink:#101010;--ink2:#444;--muted:#6a6a6a;--line:#d6d6d6;--grid:#e4e4e4;--accent:#222;--accent-soft:#ececec;--on-accent:#fff;--s1:#1d1d1d;--s2:#d4531f;--s3:#2a78d6;--s4:#c98500;--target:#9a9a9a;--good:#0b8a55;--warn:#a86a0f;--bad:#c53030;--shadow:0 1px 2px rgba(0,0,0,.08)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai","Noto Sans Thai",Tahoma,sans-serif;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:none;margin:0;padding:8px 6px}
+header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;padding:8px 0 12px}
+header.top h1{margin:0;font-size:24px;line-height:1.25;text-wrap:balance}
+header.top p{margin:2px 0 0;color:var(--ink2);font-size:13px}
+.exports{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:8px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.seg button:focus-visible,th.sortable:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.filters{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;border-bottom:1px solid var(--line);margin-bottom:14px}
+.filters label,.filters .lab{font-size:12px;color:var(--muted);margin-right:6px}
+select,input[type=search]{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;border:0;background:transparent;color:var(--ink2);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.chips{display:inline-flex;flex-wrap:wrap;gap:6px;vertical-align:middle}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);padding:3px 11px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chip.preset{border-style:dashed}
+.fgroup{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.sel-note{font-size:12px;color:var(--warn);margin:-6px 0 10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:10px;min-width:0;position:relative}
+.kpi .lab{font-size:12px;color:var(--muted)}
+.kpi .val{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0}
+.kpi .val small{font-size:13px;font-weight:500;color:var(--ink2)}
+.kpi .sub{font-size:12px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid currentColor}
+.pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.neutral{color:var(--ink2)}
+.bar-mini{height:6px;background:var(--grid);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar-mini i{display:block;height:100%;background:var(--s1);border-radius:3px}
+.insights h2,.sec h2{margin:0 0 8px;font-size:16px}
+.insights ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.insights li{color:var(--ink)}
+.insights li b{font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:8px;margin:8px 0}
+.card h3{margin:0;font-size:15px}
+.card .cap{margin:2px 0 8px;font-size:12px;color:var(--muted)}
+.chart-box{position:relative;height:300px}
+.chart-box.tall{height:340px}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.tablecard{margin-top:12px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.tscroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--surface);z-index:1;font-weight:600;color:var(--ink2);cursor:pointer;user-select:none}
+th.grp{text-align:center;cursor:default;top:0}
+td:nth-child(1),td:nth-child(2),th:nth-child(1),th:nth-child(2){text-align:left}
+td.pct{font-weight:600}
+td.pct.good{color:var(--good)}td.pct.warn{color:var(--warn)}td.pct.bad{color:var(--bad)}
+tbody tr:hover{background:var(--accent-soft)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;z-index:20;max-width:90vw}
+.hidden{display:none !important}
+.legend-note{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink2)}
+.card.zoomable{cursor:zoom-in}
+.enl{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:6px;font:inherit;font-size:12px;padding:1px 7px;cursor:pointer;opacity:.85}
+.enl:hover{border-color:var(--accent);color:var(--accent);opacity:1}
+.zoom{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;display:flex;align-items:center;justify-content:center;padding:6px}
+.zoom-card{background:var(--surface);color:var(--ink);border-radius:12px;width:100%;height:100%;max-height:96vh;display:flex;flex-direction:column;padding:10px 12px}
+.zoom-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.zoom-head h3{margin:0;font-size:18px}
+.zoom-box{position:relative;flex:1;min-height:0}
+.sec-h{margin:14px 2px 4px;font-size:17px}
+.sec-sub{margin:0 2px 6px;font-size:12px;color:var(--muted)}
+.pace-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:4px 0 8px}
+.pace-stats div{background:var(--bg);border-radius:8px;padding:8px 10px}
+.pace-stats .lab{font-size:12px;color:var(--muted)}
+.pace-stats b{display:block;font-size:20px}
+#heat td,#heat th{padding:4px 6px;font-size:12px}
+#heat td.hc{text-align:center;color:var(--ink);font-weight:600;min-width:52px}
+#heat td.streak{font-weight:700}
+.hm-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink2);align-items:center}
+.hm-legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.empty{text-align:center;padding:48px 16px;border:2px dashed var(--line);margin-top:16px}
+.empty h2{margin:0 0 6px;font-size:20px}
+.empty p{margin:4px auto;max-width:640px;color:var(--ink2)}
+.empty.drag{border-color:var(--accent);background:var(--accent-soft)}
+footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
+@media (max-width:520px){.kpi .val{font-size:24px}.chart-box{height:260px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div data-pdf="head">
+  <header class="top">
+    <div>
+      <h1 id="h1">ผลการดำเนินงานปล่อยสินเชื่อ ปี 2569</h1>
+      <p id="subtitle">อัปโหลดไฟล์ Excel เพื่อเริ่มต้น</p>
+    </div>
+    <div class="exports" data-noexport>
+      <label class="btn" id="btnUpload" for="fileIn" tabindex="0">อัปโหลดไฟล์ข้อมูลใหม่</label>
+      <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" class="hidden">
+      <button class="btn" id="btnClear" type="button">ล้างข้อมูล</button>
+      <button class="btn primary" id="btnXlsx" type="button">ดาวน์โหลด Excel</button>
+      <button class="btn primary" id="btnPptx" type="button">ดาวน์โหลด PowerPoint</button>
+      <button class="btn primary" id="btnPdf" type="button">ดาวน์โหลด PDF</button>
+    </div>
+  </header>
+  </div>
+  <div class="card empty hidden" id="emptyState" data-noexport>
+    <h2>เริ่มต้นด้วยการอัปโหลดไฟล์ข้อมูล</h2>
+    <p>กดปุ่ม "อัปโหลดไฟล์ข้อมูลใหม่" ด้านบน หรือลากไฟล์ Excel (.xlsx) มาวางที่กรอบนี้</p>
+    <p class="note">คอลัมน์ที่ต้องมี: เดือน / ภาค / เขต / กลุ่ม / พื้นที่ / เป้าหมายสินเชื่อ(ประเภทอื่นๆ ยกเว้นสินเชื่อปุ๋ย) / สาขาทำได้ยกเว้นสินเชื่อปุ๋ย / เป้าหมายสินเชื่อปุ๋ย / สาขาทำได้สินเชื่อปุ๋ย / NPL (ถ้ามี)<br>ไฟล์ประมวลผลในเบราว์เซอร์ ไม่ถูกส่งไปที่อื่น</p>
+  </div>
+  <div id="dash">
+  <div class="card" id="uploadHint" data-noexport style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between">
+    <div><b>ข้อมูลที่ใช้อยู่:</b> <span id="srcLine"></span></div>
+    <div class="note" style="margin:0">อัปโหลดไฟล์ Excel รูปแบบเดิม (คอลัมน์ เดือน / ภาค / เขต / กลุ่ม / พื้นที่ / เป้า-ทำได้ ทั่วไปและปุ๋ย / NPL) ได้ทุกเดือน · ไฟล์ประมวลผลในเบราว์เซอร์ ไม่ถูกส่งไปที่อื่น</div>
+  </div>
+  <div class="filters" id="filters" data-noexport>
+    <div class="fgroup"><span class="lab">เดือน (เลือกได้หลายเดือน)</span><span class="chips" id="monthChips" role="group" aria-label="เลือกเดือน"></span>
+      <span class="chips" id="monthPresets" role="group" aria-label="ปุ่มลัดเลือกเดือน"></span></div>
+    <div class="fgroup"><span class="lab">ภาค</span><span class="chips" id="regionChips" role="group" aria-label="เลือกภาค"></span></div>
+    <div class="fgroup"><span class="lab">ประเภทสินเชื่อ</span>
+      <span class="seg" role="group" aria-label="ประเภทสินเชื่อ" id="segType">
+        <button type="button" data-v="all" aria-pressed="true">รวม</button>
+        <button type="button" data-v="gen" aria-pressed="false">อื่นๆ (ยกเว้นปุ๋ย)</button>
+        <button type="button" data-v="fert" aria-pressed="false">ปุ๋ย</button>
+      </span></div>
+    <div class="fgroup"><label class="lab" for="selSkin">ธีม</label><select id="selSkin" aria-label="เลือกธีม"></select></div>
+  </div>
+  <p class="sel-note hidden" id="selNote"></p>
+
+  <section data-pdf="kpi"><div class="kpis" id="kpis"></div>
+  <div class="card insights" id="insights"><h2>ข้อสังเกตสำหรับการตัดสินใจ</h2><ul id="insightList"></ul></div></section>
+
+  <div class="grid" data-pdf="row1">
+    <div class="card"><h3 id="t1">ยอดปล่อยรายเดือน เทียบเป้าหมาย</h3><p class="cap" id="c1"></p><div class="chart-box"><canvas id="ch1" role="img" aria-label="กราฟเส้นยอดปล่อยรายเดือนเทียบเป้า"></canvas></div></div>
+    <div class="card"><h3 id="t2">% ทำได้ตามเป้า รายภาค</h3><p class="cap" id="c2"></p><div class="chart-box"><canvas id="ch2" role="img" aria-label="กราฟเส้นเปอร์เซ็นต์ทำได้รายภาค"></canvas></div></div>
+  </div>
+  <div class="grid" data-pdf="row2">
+    <div class="card"><h3>ยอดปล่อยแยกประเภทสินเชื่อ รายเดือน</h3><p class="cap">แท่งซ้อน: สินเชื่อทั่วไป (ยกเว้นปุ๋ย) + สินเชื่อปุ๋ย · เส้นประ = เป้ารวม</p><div class="chart-box"><canvas id="ch3" role="img" aria-label="กราฟแท่งยอดปล่อยแยกประเภท"></canvas></div></div>
+    <div class="card"><h3>สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย (% ทำได้)</h3><p class="cap">ติดตามว่าประเภทใดฉุดผลรวม</p><div class="chart-box"><canvas id="ch4" role="img" aria-label="กราฟเส้น % ทำได้ ทั่วไปเทียบปุ๋ย"></canvas></div></div>
+  </div>
+  <div class="grid" data-pdf="row3">
+    <div class="card"><h3 id="t5">เป้า เทียบ ทำได้ รายภาค</h3><p class="cap" id="c5"></p><div class="chart-box"><canvas id="ch5" role="img" aria-label="กราฟแท่งเป้าเทียบทำได้รายภาค"></canvas></div></div>
+    <div class="card"><h3 id="t6">การกระจายระดับผลงานของพื้นที่</h3><p class="cap" id="c6"></p><div class="chart-box"><canvas id="ch6" role="img" aria-label="กราฟแท่งจำนวนพื้นที่ตามระดับผลงาน"></canvas></div></div>
+  </div>
+  <div class="grid" data-pdf="row4">
+    <div class="card"><h3 id="t7">10 พื้นที่ผลงานสูงสุด</h3><p class="cap" id="c7"></p><div class="chart-box tall"><canvas id="ch7" role="img" aria-label="กราฟแท่งแนวนอน 10 พื้นที่สูงสุด"></canvas></div></div>
+    <div class="card"><h3 id="t8">10 พื้นที่ผลงานต่ำสุด</h3><p class="cap" id="c8"></p><div class="chart-box tall"><canvas id="ch8" role="img" aria-label="กราฟแท่งแนวนอน 10 พื้นที่ต่ำสุด"></canvas></div></div>
+  </div>
+  <div class="grid" data-pdf="row5">
+    <div class="card"><h3>NPL เฉลี่ยรายภาค</h3><p class="cap" id="c9"></p><div class="chart-box"><canvas id="ch9" role="img" aria-label="กราฟเส้น NPL เฉลี่ยรายภาค"></canvas></div></div>
+    <div class="card"><h3 id="t10">10 พื้นที่ NPL สูงสุด</h3><p class="cap" id="c10"></p><div class="chart-box"><canvas id="ch10" role="img" aria-label="กราฟแท่งแนวนอน NPL สูงสุด"></canvas></div></div>
+  </div>
+
+  <h2 class="sec-h" data-pdf="secA">การวิเคราะห์เชิงลึก</h2>
+  <p class="sec-sub">ใช้ตัวกรองเดียวกับด้านบน (เดือน ภาค ประเภทสินเชื่อ)</p>
+  <div class="grid" data-pdf="row6">
+    <div class="card"><h3 id="t11">ผลงาน เทียบ NPL รายพื้นที่</h3><p class="cap" id="c11"></p><div class="chart-box tall"><canvas id="ch11" role="img" aria-label="กราฟจุด % ทำได้เทียบ NPL"></canvas></div><p class="note" id="n11"></p></div>
+    <div class="card"><h3 id="t12">พื้นที่ที่ขาดเป้ามากที่สุด (บาท)</h3><p class="cap" id="c12"></p><div class="chart-box tall"><canvas id="ch12" role="img" aria-label="กราฟ Pareto ยอดขาดเป้า"></canvas></div><p class="note" id="n12"></p></div>
+  </div>
+  <div class="grid" data-pdf="row7">
+    <div class="card"><h3 id="t13">ยอดสะสม เทียบ เป้าสะสม และทางไปถึงสิ้นปี</h3><p class="cap" id="c13"></p>
+      <div class="pace-stats" id="paceStats"></div>
+      <div class="chart-box"><canvas id="ch13" role="img" aria-label="กราฟเส้นยอดสะสมเทียบเป้าสะสม"></canvas></div><p class="note" id="n13"></p></div>
+  </div>
+  <section class="card" style="margin-top:8px" data-pdf="heat">
+    <div class="tools"><div><h3 id="t14">Heatmap % ทำได้ รายพื้นที่ × เดือน</h3><p class="cap" id="c14" style="margin:0"></p></div>
+      <div class="hm-legend" id="hmLegend"></div></div>
+    <div class="tscroll" style="max-height:560px"><table id="heat"></table></div>
+    <p class="note" id="n14"></p>
+  </section>
+
+  <section class="card tablecard" id="tableCard" data-noexport-pdf>
+    <div class="tools">
+      <div><h3 id="tableTitle">รายละเอียดรายพื้นที่</h3><p class="cap" id="tableCap" style="margin:0"></p></div>
+      <input type="search" id="q" placeholder="ค้นหาพื้นที่ / รหัส" aria-label="ค้นหาพื้นที่">
+    </div>
+    <div class="tscroll"><table id="tbl"></table></div>
+  </section>
+
+  <div class="card" style="margin-top:12px" data-pdf="notes">
+    <h3>หมายเหตุเรื่องข้อมูล</h3>
+    <ul class="note" id="notes" style="padding-left:18px;margin:6px 0 0"></ul>
+  </div>
+  </div>
+  <footer id="foot"></footer>
+</div>
+<div class="zoom hidden" id="zoom" role="dialog" aria-modal="true" aria-label="กราฟขยาย" data-noexport>
+  <div class="zoom-card"><div class="zoom-head"><div><h3 id="zTitle"></h3><p class="cap" id="zCap" style="margin:2px 0 0"></p></div><button class="btn" id="zClose" type="button">ปิด ✕</button></div><div class="zoom-box"><canvas id="zCanvas" role="img" aria-label="กราฟขยาย"></canvas></div></div>
+</div>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// row: [monthIdx, region, zone, code, name, targetGen, actualGen, targetFert, actualFert, npl]
+let DATA = [];
+const MS12 = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const MF12 = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+let MNO=[], MS=[], MF=[], LAST=-1, YEAR=new Date().getFullYear()+543, STRUCT=[], SRC='', PRE=[];
+function setCalendar(){ MS=MNO.map(i=>MS12[i]); MF=MNO.map(i=>MF12[i]); LAST=MNO.length-1;
+  const keys=MNO.map((_,i)=>DATA.filter(r=>r[0]===i).map(r=>r[3]).sort().join('|')), seen=[]; STRUCT=keys.map(k=>{let j=seen.indexOf(k);if(j<0){seen.push(k);j=seen.length-1;}return j;});
+  const q=(x,y)=>MNO.map((n,i)=>n>=x&&n<=y?i:-1).filter(i=>i>=0);
+  PRE=[['ทั้งปี',MNO.map((_,i)=>i)],['ล่าสุด',[LAST]],['ไตรมาส 1',q(0,2)],['ไตรมาส 2',q(3,5)],['ไตรมาส 3',q(6,8)],['ไตรมาส 4',q(9,11)]].filter(p=>p[1].length); }
+setCalendar();
+const TYPES = {all:'รวมทุกประเภท', gen:'สินเชื่อทั่วไป (ยกเว้นปุ๋ย)', fert:'สินเชื่อปุ๋ย'};
+const st = {type:'all', months:new Set(), regions:new Set([1,2,3,4]), sortKey:'pAll', sortDir:1, q:''};
+Object.defineProperty(st,'month',{get:()=>Math.max(...st.months)});
+const $ = id => document.getElementById(id);
+
+/* ---------- helpers ---------- */
+const tv = (r,t) => t==='gen' ? r[5] : t==='fert' ? r[7] : r[5]+r[7];
+const av = (r,t) => t==='gen' ? r[6] : t==='fert' ? r[8] : r[6]+r[8];
+const inReg = r => st.regions.has(r[1]);
+const rowsOf = (m, region) => DATA.filter(r => r[0]===m && (region==null ? inReg(r) : (region===0 || r[1]===region)));
+function agg(rows,t){ let T=0,A=0; for(const r of rows){T+=tv(r,t);A+=av(r,t);} return {t:T,a:A,p:T>0?A/T:null}; }
+const M = v => (v/1e6).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+const N = v => Math.round(v).toLocaleString('en-US');
+const P = (v,d=1) => v==null ? '–' : (v*100).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const PP = v => v==null ? '–' : (v*100).toFixed(1);
+const regionName = r => r===0 ? 'ทุกภาค' : 'ภาค '+r;
+const regLabel = () => st.regions.size===4 ? 'ทุกภาค' : 'ภาค '+[...st.regions].sort().join(', ');
+function mLabel(){ const a=[...st.months].sort((x,y)=>x-y); if(a.length===1) return MF[a[0]];
+  const contiguous=a[a.length-1]-a[0]===a.length-1; return contiguous?`${MS[a[0]]}–${MS[a[a.length-1]]}${a.length===MS.length?' (ทั้งปี)':''}`:a.map(m=>MS[m]).join(', '); }
+const mShort = () => { const a=[...st.months].sort((x,y)=>x-y); return a.length===1?MS[a[0]]:`${MS[a[0]]}-${MS[a[a.length-1]]}`; };
+const selRows = region => DATA.filter(r=>st.months.has(r[0]) && (region==null ? inReg(r) : r[1]===region));
+function areaRows(){ // aggregate selected months per area code, using the structure of the latest selected month
+  const sid=STRUCT[st.month], by=new Map();
+  for(const r of selRows()){ if(STRUCT[r[0]]!==sid) continue; let o=by.get(r[3]);
+    if(!o){ o=[0,r[1],r[2],r[3],r[4],0,0,0,0,null,[]]; by.set(r[3],o); }
+    o[5]+=r[5];o[6]+=r[6];o[7]+=r[7];o[8]+=r[8]; if(r[9]!=null) o[10].push(r[9]); }
+  return [...by.values()].map(o=>{o[9]=o[10].length?o[10].reduce((x,y)=>x+y,0)/o[10].length:null;return o;});
+}
+function mixedStructure(){ return [...st.months].some(m=>STRUCT[m]!==STRUCT[st.month]); }
+const nplMonths = () => MS.map((_,i)=>i).filter(i=>DATA.some(r=>r[0]===i&&r[9]!=null));
+const nplFrom = () => { const a=nplMonths(); return a.length?MS[a[0]]:'-'; };
+const cls = p => p==null ? '' : p>=1 ? 'good' : p>=0.8 ? 'warn' : 'bad';
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const monthSeries = (t, region) => MS.map((_,m)=>agg(rowsOf(m,region),t));
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+function nplRows(m, region){ return rowsOf(m,region).filter(r=>r[9]!=null); }
+function nplMonth(){ for(let m=LAST;m>=0;m--) if(st.months.has(m)&&DATA.some(r=>r[0]===m&&r[9]!=null)) return m; return null; }
+function areaStats(_m,t){ // per-area pct over the selected months
+  return areaRows().map(r=>({code:r[3],name:r[4],region:r[1],t:tv(r,t),a:av(r,t),p:tv(r,t)>0?av(r,t)/tv(r,t):null,npl:r[9],tg:r[5],ag:r[6],pg:r[5]>0?r[6]/r[5]:null,tf:r[7],af:r[8],pf:r[7]>0?r[8]/r[7]:null})).filter(x=>x.p!=null);
+}
+function toast(msg,ms=3500){const e=$('toast');e.textContent=msg;e.classList.remove('hidden');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.add('hidden'),ms);}
+
+/* ---------- charts ---------- */
+const charts = {}, cfgCopy = {};
+function deepClone(o){ if(Array.isArray(o)) return o.map(deepClone); if(o&&typeof o==='object'&&Object.getPrototypeOf(o)===Object.prototype){const r={};for(const k of Object.keys(o)) r[k]=deepClone(o[k]);return r;} return o; }
+let zoomChart=null;
+function openZoom(id,card){
+  if(!cfgCopy[id]) return; const cfg=deepClone(cfgCopy[id]);
+  (cfg.data.datasets||[]).forEach(d=>{ if(d.barThickness){ delete d.barThickness; d.maxBarThickness=34; } });
+  $('zTitle').textContent=(card.querySelector('h3')||{}).textContent||''; $('zCap').textContent=(card.querySelector('.cap')||{}).textContent||'';
+  $('zoom').classList.remove('hidden'); if(zoomChart) zoomChart.destroy();
+  Chart.defaults.font.size=14; zoomChart=new Chart($('zCanvas'),cfg); Chart.defaults.font.size=12; $('zClose').focus();
+}
+function closeZoom(){ $('zoom').classList.add('hidden'); if(zoomChart){zoomChart.destroy();zoomChart=null;} }
+const valueLabels = {
+  id:'valueLabels',
+  afterDatasetsDraw(chart,_a,opts){
+    if(!opts||!opts.fmt) return;
+    const {ctx}=chart; ctx.save(); ctx.font='600 11px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle=css('--ink2');
+    chart.data.datasets.forEach((ds,i)=>{ if(ds.type==='line'||ds.noLabel) return;
+      const meta=chart.getDatasetMeta(i); if(meta.hidden) return;
+      meta.data.forEach((el,j)=>{ const v=ds.data[j]; if(v==null) return;
+        const txt=opts.fmt(v,i,j);
+        if(chart.options.indexAxis==='y'){ ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(txt,el.x+4,el.y); }
+        else { ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(txt,el.x,el.y-3); }
+      });});
+    ctx.restore();
+  }
+};
+Chart.register(valueLabels);
+function theme(){ return {ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
+function mk(id,cfg){
+  if(charts[id]) charts[id].destroy();
+  const th=theme();
+  Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+  Chart.defaults.font.size=12; Chart.defaults.color=th.ink2;
+  cfg.options=Object.assign({responsive:true,maintainAspectRatio:false,animation:false},cfg.options||{});
+  cfgCopy[id]=deepClone(cfg);
+  charts[id]=new Chart($(id),cfg); return charts[id];
+}
+const axisBase = th => ({grid:{color:th.grid,drawBorder:false},border:{display:false},ticks:{color:th.ink2}});
+function tipBase(th,extra){ return Object.assign({backgroundColor:th.surface,titleColor:th.ink,bodyColor:th.ink,borderColor:th.grid,borderWidth:1,padding:10,boxPadding:4},extra||{}); }
+const legend = th => ({position:'top',align:'start',labels:{color:th.ink2,usePointStyle:true,boxWidth:8,boxHeight:8}});
+
+function renderCharts(){
+  if(!DATA.length) return;
+  const th=theme(), t=st.type, reg=0, f=st.month;
+  /* 1 monthly target vs actual */
+  const ms=monthSeries(t);
+  $('t1').textContent='ยอดปล่อยรายเดือน เทียบเป้าหมาย';
+  $('c1').textContent=`${TYPES[t]} · ${regLabel()} · ล้านบาท`;
+  mk('ch1',{type:'line',data:{labels:MS,datasets:[
+    {label:'เป้าหมาย',data:ms.map(x=>x.t/1e6),borderColor:th.target,borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:th.target,tension:.25},
+    {label:'ทำได้',data:ms.map(x=>x.a/1e6),borderColor:th.s[0],backgroundColor:th.s[0]+'26',fill:true,borderWidth:3,pointRadius:ms.map((_,i)=>st.months.has(i)?7:3),pointBackgroundColor:th.s[0],pointBorderColor:th.surface,pointBorderWidth:2,tension:.25}]},
+    options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})} ล้านบาท`,afterBody:i=>{const x=ms[i[0].dataIndex];return 'ทำได้ '+P(x.p)+' ของเป้า';}}})},
+      scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'ล้านบาท',color:th.ink2}})}}});
+
+  /* 2 % by region */
+  $('c2').textContent=`${TYPES[t]} · เส้นจุด = รวมภาคที่เลือก · เส้นประ = เป้า 100%`;
+  const rds=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,data:monthSeries(t,r).map(x=>x.p==null?null:x.p*100),borderColor:th.s[r-1],backgroundColor:th.s[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:st.regions.has(r)?4:2,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.25}));
+  rds.push({label:'รวมภาคที่เลือก',data:ms.map(x=>x.p==null?null:x.p*100),borderColor:th.ink,borderWidth:2,borderDash:[2,3],pointRadius:0,tension:.25});
+  rds.push({label:'เป้า 100%',data:MS.map(()=>100),borderColor:th.target,borderDash:[6,4],borderWidth:1.5,pointRadius:0});
+  mk('ch2',{type:'line',data:{labels:MS,datasets:rds},options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}})},scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+
+  /* 3 stacked by type */
+  const g=monthSeries('gen'),fe=monthSeries('fert'),al=monthSeries('all');
+  mk('ch3',{data:{labels:MS,datasets:[
+    {type:'bar',label:'ทั่วไป (ยกเว้นปุ๋ย)',data:g.map(x=>x.a/1e6),backgroundColor:th.s[0],borderColor:th.surface,borderWidth:2,borderRadius:4,stack:'a',noLabel:true},
+    {type:'bar',label:'ปุ๋ย',data:fe.map(x=>x.a/1e6),backgroundColor:th.s[2],borderColor:th.surface,borderWidth:2,borderRadius:4,stack:'a',noLabel:true},
+    {type:'line',label:'เป้ารวม',data:al.map(x=>x.t/1e6),borderColor:th.target,borderDash:[6,4],borderWidth:2,pointRadius:3,pointBackgroundColor:th.target,tension:.2}]},
+    options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})} ล้านบาท`}})},scales:{x:Object.assign(axisBase(th),{stacked:true}),y:Object.assign(axisBase(th),{stacked:true,beginAtZero:true,title:{display:true,text:'ล้านบาท',color:th.ink2}})}}});
+
+  /* 4 general vs fert pct */
+  mk('ch4',{type:'line',data:{labels:MS,datasets:[
+    {label:'ทั่วไป (ยกเว้นปุ๋ย)',data:g.map(x=>x.p==null?null:x.p*100),borderColor:th.s[0],backgroundColor:th.s[0],borderWidth:3,pointRadius:4,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.25},
+    {label:'ปุ๋ย',data:fe.map(x=>x.p==null?null:x.p*100),borderColor:th.s[2],backgroundColor:th.s[2],borderWidth:3,pointRadius:4,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.25},
+    {label:'เป้า 100%',data:MS.map(()=>100),borderColor:th.target,borderDash:[6,4],borderWidth:1.5,pointRadius:0}]},
+    options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`}})},scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+
+  /* 5 region target vs actual at focus month */
+  const regs=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({r,...agg(selRows(r),t)}));
+  $('t5').textContent=`เป้า เทียบ ทำได้ รายภาค · ${mLabel()}`;
+  $('c5').textContent=`${TYPES[t]} · ล้านบาท · ตัวเลขท้ายแท่ง = ทำได้`;
+  if(t==='all'){
+    const rg=regs.map(x=>({...x,g:agg(selRows(x.r),'gen'),f:agg(selRows(x.r),'fert')}));
+    $('t5').textContent=`เป้า เทียบ ทำได้ รายภาค แยกประเภท · ${mLabel()}`;
+    $('c5').textContent='แท่งเทา = เป้า · แท่งสี = ทำได้ (ซ้อน: ทั่วไป + ปุ๋ย) · ล้านบาท';
+    mk('ch5',{type:'bar',data:{labels:rg.map(x=>`ภาค ${x.r} · รวม ${P(x.p,0)}`),datasets:[
+      {label:'เป้า ทั่วไป',data:rg.map(x=>x.g.t/1e6),stack:'t',backgroundColor:th.target,borderColor:th.surface,borderWidth:2,noLabel:true},
+      {label:'เป้า ปุ๋ย',data:rg.map(x=>x.f.t/1e6),stack:'t',backgroundColor:th.target+'88',borderColor:th.surface,borderWidth:2,noLabel:true},
+      {label:'ทำได้ ทั่วไป',data:rg.map(x=>x.g.a/1e6),stack:'a',backgroundColor:th.s[0],borderColor:th.surface,borderWidth:2,noLabel:true},
+      {label:'ทำได้ ปุ๋ย',data:rg.map(x=>x.f.a/1e6),stack:'a',backgroundColor:th.s[2],borderColor:th.surface,borderWidth:2,noLabel:true}]},
+      options:{indexAxis:'y',plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.x.toFixed(1)} ล้านบาท`,afterBody:i=>{const x=rg[i[0].dataIndex];return [`ทั่วไป ทำได้ ${P(x.g.p)} · ปุ๋ย ทำได้ ${P(x.f.p)}`,`รวม ${P(x.p)}`];}}})},
+        scales:{x:Object.assign(axisBase(th),{stacked:true,beginAtZero:true}),y:Object.assign(axisBase(th),{stacked:true,grid:{display:false}})}}});
+  } else
+  mk('ch5',{type:'bar',data:{labels:regs.map(x=>`ภาค ${x.r} (${P(x.p,0)})`),datasets:[
+    {label:'เป้าหมาย',data:regs.map(x=>x.t/1e6),backgroundColor:th.target,borderRadius:4,borderColor:th.surface,borderWidth:2},
+    {label:'ทำได้',data:regs.map(x=>x.a/1e6),backgroundColor:th.s[0],borderRadius:4,borderColor:th.surface,borderWidth:2}]},
+    options:{indexAxis:'y',plugins:{legend:legend(th),valueLabels:{fmt:v=>v.toFixed(1)},tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.x.toFixed(1)} ล้านบาท`}})},scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'12%'}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:24}}}});
+
+  /* 6 buckets */
+  const as=areaStats(f,t);
+  const bk=[['< 50%',x=>x<.5,th.bad],['50–79%',x=>x>=.5&&x<.8,css('--s2')],['80–99%',x=>x>=.8&&x<1,th.warn],['≥ 100%',x=>x>=1,th.good]];
+  const cnt=bk.map(b=>as.filter(a=>b[1](a.p)).length);
+  $('t6').textContent=`การกระจายระดับผลงานของพื้นที่ · ${mLabel()}`;
+  $('c6').textContent=`${TYPES[t]} · ${regLabel()} · จำนวนพื้นที่ที่มีเป้า ${as.length} แห่ง`;
+  mk('ch6',{type:'bar',data:{labels:bk.map(b=>b[0]),datasets:[{label:'จำนวนพื้นที่',data:cnt,backgroundColor:bk.map(b=>b[2]),borderRadius:6,maxBarThickness:70}]},
+    options:{plugins:{legend:{display:false},valueLabels:{fmt:v=>v+' แห่ง'},tooltip:tipBase(th,{callbacks:{label:c=>`${c.parsed.y} พื้นที่ (${as.length?(c.parsed.y/as.length*100).toFixed(0):0}%)`}})},scales:{x:Object.assign(axisBase(th),{grid:{display:false}}),y:Object.assign(axisBase(th),{beginAtZero:true,grace:'15%',ticks:{color:th.ink2,precision:0}})}}});
+
+  /* 7/8 rankings */
+  const sorted=[...as].sort((a,b)=>b.p-a.p);
+  const top=sorted.slice(0,10), bot=sorted.slice(-10).reverse();
+  $('t7').textContent=`10 พื้นที่ผลงานสูงสุด · ${mLabel()}`; $('c7').textContent=`${TYPES[t]} · ${regLabel()} · % ทำได้ตามเป้า${t==='all'?' · แยกทั่วไป/ปุ๋ย เรียงตามผลรวม':''}`;
+  $('t8').textContent=`10 พื้นที่ผลงานต่ำสุด · ${mLabel()}`; $('c8').textContent=`${TYPES[t]} · ${regLabel()} · % ทำได้ตามเป้า${t==='all'?' · แยกทั่วไป/ปุ๋ย เรียงตามผลรวม':''}`;
+  const rkSplit=(id,list)=>mk(id,{type:'bar',data:{labels:list.map(x=>`${x.name} (ภ.${x.region}) · รวม ${(x.p*100).toFixed(0)}%`),datasets:[
+      {label:'ทั่วไป (ยกเว้นปุ๋ย)',data:list.map(x=>x.pg==null?null:x.pg*100),backgroundColor:th.s[0],borderRadius:3,barThickness:9},
+      {label:'ปุ๋ย',data:list.map(x=>x.pf==null?null:x.pf*100),backgroundColor:th.s[2],borderRadius:3,barThickness:9}]},
+    options:{indexAxis:'y',plugins:{legend:legend(th),valueLabels:{fmt:v=>v.toFixed(0)+'%'},tooltip:tipBase(th,{callbacks:{title:i=>list[i[0].dataIndex].code+' '+list[i[0].dataIndex].name,label:c=>{const x=list[c.dataIndex];const g=c.datasetIndex===0;const p=g?x.pg:x.pf;return p==null?`${c.dataset.label}: ไม่มีเป้า`:`${c.dataset.label}: ${(p*100).toFixed(1)}% (${N(g?x.ag:x.af)} / ${N(g?x.tg:x.tf)} บาท)`;},afterBody:i=>`รวม ${(list[i[0].dataIndex].p*100).toFixed(1)}%`}})},scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'18%',ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:30}}}});
+  const rk=(id,list,color)=>t==='all'?rkSplit(id,list):rk1(id,list,color);
+  const rk1=(id,list,color)=>mk(id,{type:'bar',data:{labels:list.map(x=>`${x.name} (ภ.${x.region})`),datasets:[{data:list.map(x=>x.p*100),backgroundColor:color,borderRadius:4,barThickness:16}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:v=>v.toFixed(0)+'%'},tooltip:tipBase(th,{callbacks:{title:i=>list[i[0].dataIndex].code+' '+list[i[0].dataIndex].name,label:c=>{const x=list[c.dataIndex];return [`ทำได้ ${(x.p*100).toFixed(1)}% ของเป้า`,`${N(x.a)} / ${N(x.t)} บาท`];}}})},scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'15%',ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:28}}}});
+  rk('ch7',top,th.good); rk('ch8',bot,th.bad);
+
+  /* 9 NPL by region */
+  const nm=nplMonths(); $('c9').textContent=nm.length?`มีข้อมูลตั้งแต่ ${nplFrom()} ${YEAR} · ค่าเฉลี่ยรายพื้นที่ (ไม่ถ่วงน้ำหนัก)`:'ไฟล์นี้ไม่มีข้อมูล NPL';
+  mk('ch9',{type:'line',data:{labels:nm.map(m=>MS[m]),datasets:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({label:'ภาค '+r,data:nm.map(m=>{const a=nplRows(m,r).map(x=>x[9]);const v=avg(a);return v==null?null:v*100;}),borderColor:th.s[r-1],backgroundColor:th.s[r-1],borderWidth:st.regions.has(r)?3:1.5,pointRadius:5,pointBorderColor:th.surface,pointBorderWidth:1.5,tension:.2}))},
+    options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)}%`}})},scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+
+  /* 10 top NPL areas */
+  const nmo=nplMonth();
+  if(nmo==null){ $('t10').textContent='10 พื้นที่ NPL สูงสุด'; $('c10').textContent='ยังไม่มีข้อมูล NPL ในช่วงที่เลือก (มีตั้งแต่ '+nplFrom()+')';
+    mk('ch10',{type:'bar',data:{labels:[],datasets:[{data:[]}]},options:{plugins:{legend:{display:false}}}}); }
+  else{
+    const nr=nplRows(nmo).sort((a,b)=>b[9]-a[9]).slice(0,10);
+    $('t10').textContent=`10 พื้นที่ NPL สูงสุด · ${MF[nmo]}`; $('c10').textContent=`${regLabel()} · สีแท่งตามภาค · เกิน 10% ถือว่าเฝ้าระวัง`;
+    mk('ch10',{type:'bar',data:{labels:nr.map(r=>`${r[4]} (ภ.${r[1]})`),datasets:[{data:nr.map(r=>r[9]*100),backgroundColor:nr.map(r=>th.s[r[1]-1]),borderRadius:4,barThickness:16}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:v=>v.toFixed(1)+'%'},tooltip:tipBase(th,{callbacks:{label:c=>`NPL ${c.parsed.x.toFixed(2)}%`}})},scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'15%',ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:36}}}});
+  }
+}
+const _ms0 = {}; function ms0(t){ return monthSeries(t,0); }
+
+/* ---------- KPI + insights ---------- */
+function computeView(){
+  const f=st.month, rf=selRows(), prev=(st.months.size===1&&f>0)?rowsOf(f-1):null;
+  const all=agg(rf,'all'), gen=agg(rf,'gen'), fert=agg(rf,'fert');
+  const pAll=prev?agg(prev,'all'):null;
+  let ytdT=0,ytdA=0; for(let m=0;m<=f;m++){const x=agg(rowsOf(m),'all');ytdT+=x.t;ytdA+=x.a;}
+  const as=areaStats(f,'all');
+  const nmo=nplMonth(); const nr=nmo==null?[]:nplRows(nmo);
+  const nplAvg=nr.length?avg(nr.map(r=>r[9])):null;
+  const regs=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({r,...agg(selRows(r),'all')}));
+  return {f,all,gen,fert,pAll,ytd:{t:ytdT,a:ytdA,p:ytdT>0?ytdA/ytdT:null},as,nmo,nplAvg,nr,regs,
+    mom:pAll&&pAll.a>0?all.a/pAll.a-1:null};
+}
+function renderKpis(){
+  const v=computeView(), f=st.month;
+  const tile=(lab,val,sub,p)=>`<div class="card kpi"><div class="lab">${lab}</div><div class="val">${val}</div><div class="sub">${sub}</div>${p!=null?`<div class="bar-mini" aria-hidden="true"><i style="width:${Math.min(100,p*100).toFixed(0)}%"></i></div>`:''}</div>`;
+  const pill=(p)=>`<span class="pill ${cls(p)||'neutral'}">${P(p)}</span>`;
+  const mom=v.mom==null?'':`<span>${v.mom>=0?'▲':'▼'} ${Math.abs(v.mom*100).toFixed(1)}% จากเดือนก่อน</span>`;
+  const ge=v.as.filter(x=>x.p>=1).length;
+  $('kpis').innerHTML=
+    tile(`ยอดปล่อย ${mLabel()} (${regLabel()})`,`${M(v.all.a)} <small>ล้านบาท</small>`,`${pill(v.all.p)} <span>เป้า ${M(v.all.t)}</span> ${mom}`,v.all.p)+
+    tile(`สะสม ${MS[0]}–${MS[f]}`,`${M(v.ytd.a)} <small>ล้านบาท</small>`,`${pill(v.ytd.p)} <span>เป้าสะสม ${M(v.ytd.t)}</span>`,v.ytd.p)+
+    tile('สินเชื่อทั่วไป (ยกเว้นปุ๋ย)',`${P(v.gen.p)}`,`<span>${M(v.gen.a)} จาก ${M(v.gen.t)} ล้านบาท</span>`,v.gen.p)+
+    tile('สินเชื่อปุ๋ย',`${P(v.fert.p)}`,`<span>${M(v.fert.a)} จาก ${M(v.fert.t)} ล้านบาท</span>`,v.fert.p)+
+    tile('พื้นที่ทำได้ถึงเป้า',`${ge} <small>/ ${v.as.length} แห่ง</small>`,`<span>${v.as.length?(ge/v.as.length*100).toFixed(0):0}% ของพื้นที่ที่มีเป้า</span>`,v.as.length?ge/v.as.length:null)+
+    tile(v.nmo==null?'NPL เฉลี่ย':`NPL เฉลี่ย ${MS[v.nmo]}`,v.nplAvg==null?'–':P(v.nplAvg,2),v.nmo==null?`<span>มีข้อมูลตั้งแต่ ${nplFrom()}</span>`:`<span>เฉลี่ยรายพื้นที่ ${v.nr.length} แห่ง · ${v.nr.filter(r=>r[9]>=.1).length} แห่งเกิน 10%</span>`,null);
+  $('subtitle').textContent=`ข้อมูล ${MS[0]} – ${MS[LAST]} ${YEAR} · ดู ${mLabel()} · ${regLabel()} · หน่วย: ล้านบาท`;
+}
+function insights(){
+  const v=computeView(), f=st.month, out=[];
+  const best=[...v.regs].filter(x=>x.p!=null).sort((a,b)=>b.p-a.p), n=best.length;
+  out.push(`<b>${mLabel()}</b>${st.months.size>1?' (รวมเดือนที่เลือก)':''} ปล่อยสินเชื่อรวมได้ <b>${M(v.all.a)} ล้านบาท</b> คิดเป็น <b>${P(v.all.p)}</b> ของเป้า ${M(v.all.t)} ล้านบาท`+(v.mom!=null?` (${v.mom>=0?'เพิ่มขึ้น':'ลดลง'} ${Math.abs(v.mom*100).toFixed(1)}% จากเดือนก่อน)`:''));
+  out.push(`ผลสะสม ${MS[0]}–${MS[f]} ได้ <b>${M(v.ytd.a)} ล้านบาท</b> หรือ <b>${P(v.ytd.p)}</b> ของเป้าสะสม`);
+  if(n>=2) out.push(`ระดับภาค: <b>ภาค ${best[0].r}</b> สูงสุด (${P(best[0].p)}) และ <b>ภาค ${best[n-1].r}</b> ต่ำสุด (${P(best[n-1].p)}) ห่างกัน ${((best[0].p-best[n-1].p)*100).toFixed(1)} จุด`);
+  if(v.gen.p!=null&&v.fert.p!=null){ const d=(v.fert.p-v.gen.p)*100; out.push(`สินเชื่อปุ๋ยทำได้ <b>${P(v.fert.p)}</b> ${d<0?'ต่ำกว่า':'สูงกว่า'}สินเชื่อทั่วไป (${P(v.gen.p)}) อยู่ ${Math.abs(d).toFixed(1)} จุด${d<-15?' ควรเร่งติดตามสินเชื่อปุ๋ย':''}`); }
+  const low=v.as.filter(x=>x.p<.5), hi=v.as.filter(x=>x.p>=1);
+  out.push(`พื้นที่ถึงเป้า <b>${hi.length}</b> จาก ${v.as.length} แห่ง · ต่ำกว่า 50% ของเป้า <b>${low.length}</b> แห่ง`);
+  const bot=[...v.as].sort((a,b)=>a.p-b.p).slice(0,3);
+  if(bot.length) out.push(`พื้นที่ที่ควรติดตามเป็นพิเศษ: ${bot.map(x=>`<b>${x.name}</b> (${P(x.p,0)})`).join(', ')}`);
+  const ser=monthSeries('all').slice(0,f+1).filter(x=>x.p!=null);
+  if(ser.length>1){ let bi=0; ser.forEach((x,i)=>{if(x.p>ser[bi].p)bi=i;}); out.push(`เดือนที่ % ทำได้สูงสุดในช่วง ${MS[0]}–${MS[f]} คือ <b>${MF[bi]}</b> (${P(ser[bi].p)})`); }
+  if(v.nmo!=null){ const hv=v.nr.filter(r=>r[9]>=.1).length; const wr=[1,2,3,4].map(r=>({r,a:avg(nplRows(v.nmo,r).map(x=>x[9]))})).filter(x=>x.a!=null).sort((a,b)=>b.a-a.a)[0];
+    out.push(`NPL (${MS[v.nmo]}) เฉลี่ย <b>${P(v.nplAvg,2)}</b> · ${hv} พื้นที่สูงกว่า 10%${wr?` · ภาคที่สูงสุดคือ <b>ภาค ${wr.r}</b> (${P(wr.a,2)})`:''}`); }
+  { const A=analysis(), pc=A.pace;
+    if(A.gaps.length){ const s10=A.gaps.slice(0,10).reduce((s,x)=>s+x.gap,0); out.push(`ยอดขาดเป้ารวม <b>${M(A.gTot)} ล้านบาท</b> กระจุกตัว: 10 พื้นที่แรกคิดเป็น <b>${(s10/A.gTot*100).toFixed(0)}%</b> (เช่น ${A.gaps.slice(0,3).map(x=>x.name).join(', ')}) แก้กลุ่มนี้ได้ผลมากที่สุด`); }
+    if(pc.remaining>0) out.push(`ต้องปล่อยเฉลี่ย <b>${M(pc.need)} ล้านบาท/เดือน</b> ในอีก ${pc.remaining} เดือนเพื่อถึงเป้าทั้งปี (ประมาณ ${M(pc.estAnnualT)} ล้านบาท) เทียบกับอัตราปัจจุบัน ${M(pc.runA)} ล้านบาท/เดือน · ถ้าอัตราเท่าเดิมจะจบปีที่ <b>${P(pc.estAnnualT?pc.projA/pc.estAnnualT:null)}</b> ของเป้า`);
+    const risk=A.pts.filter(x=>x.q==='ต่ำกว่าเป้า · NPL สูง'); if(A.pts.length) out.push(`พื้นที่กลุ่มเสี่ยง (ต่ำกว่าเป้าและ NPL ≥ 10%) <b>${risk.length}</b> แห่ง${risk.length?': '+risk.sort((a,b)=>b.npl-a.npl).slice(0,4).map(x=>x.name).join(', '):''}`);
+    const s3=A.rows.filter(r=>r.streak>=3); if(s3.length) out.push(`พื้นที่ต่ำกว่า 80% ติดต่อกัน 3 เดือนขึ้นไป <b>${s3.length}</b> แห่ง เช่น ${s3.slice(0,4).map(x=>x.name).join(', ')} ควรทบทวนเป้าหรือแผนงาน`);
+  }
+  $('insightList').innerHTML=out.map(x=>`<li>${x}</li>`).join('');
+  return out.map(x=>x.replace(/<[^>]+>/g,''));
+}
+function renderNotes(){
+  const cnt=MS.map((_,i)=>new Set(DATA.filter(r=>r[0]===i).map(r=>r[3])).size);
+  const groups=[]; MS.forEach((_,i)=>{const g=groups[groups.length-1]; if(g&&STRUCT[i]===g.sid) g.to=i; else groups.push({sid:STRUCT[i],from:i,to:i,n:cnt[i]});});
+  const nl=[];
+  if(groups.length>1) nl.push('โครงสร้างพื้นที่ในไฟล์เปลี่ยนระหว่างปี: '+groups.map(g=>`${MS[g.from]}${g.to>g.from?'–'+MS[g.to]:''} มี ${g.n} พื้นที่`).join(' · ')+' จึงเทียบรายพื้นที่ข้ามช่วงที่โครงสร้างต่างกันไม่ได้ แต่ระดับภาคและภาพรวมเทียบกันได้');
+  nl.push('ถือว่าตัวเลขเป็นยอดปล่อยรายเดือน (ไม่สะสม) และหน่วยเป็นบาท · ยอดสะสมคำนวณจากผลรวมรายเดือน');
+  nl.push('% ทำได้ของภาคและภาพรวม = ผลรวมทำได้ ÷ ผลรวมเป้า · พื้นที่ที่เป้าเป็น 0 ไม่นำมาจัดอันดับ');
+  const nm=nplMonths(); nl.push(nm.length?`NPL มีเฉพาะ ${MS[nm[0]]}–${MS[nm[nm.length-1]]} และแสดงเป็นค่าเฉลี่ยรายพื้นที่แบบไม่ถ่วงน้ำหนัก เพราะไฟล์ไม่มียอดคงค้าง`:'ไฟล์นี้ไม่มีข้อมูล NPL');
+  nl.push('ภาคที่ไม่ได้เลือกจะไม่แสดงในกราฟ ตัวเลข และไฟล์ที่ export · เมื่อเลือกประเภท "รวม" กราฟรายภาคและอันดับพื้นที่จะแยกสินเชื่อทั่วไปกับปุ๋ย');
+  $('notes').innerHTML=nl.map(x=>`<li>${x}</li>`).join('');
+}
+
+
+/* ---------- table ---------- */
+const COLS=[['code','รหัส',r=>r.code],['name','พื้นที่',r=>r.name],['region','ภาค',r=>r.region],
+ ['tGen','เป้าทั่วไป',r=>r.tGen],['aGen','ทำได้ทั่วไป',r=>r.aGen],['pGen','%',r=>r.pGen],
+ ['tFert','เป้าปุ๋ย',r=>r.tFert],['aFert','ทำได้ปุ๋ย',r=>r.aFert],['pFert','%',r=>r.pFert],
+ ['tAll','เป้ารวม',r=>r.tAll],['aAll','ทำได้รวม',r=>r.aAll],['pAll','% รวม',r=>r.pAll],['npl','NPL',r=>r.npl]];
+function tableRows(){
+  return areaRows().map(r=>{const o={code:r[3],name:r[4],region:r[1],zone:r[2],tGen:r[5],aGen:r[6],tFert:r[7],aFert:r[8],tAll:r[5]+r[7],aAll:r[6]+r[8],npl:r[9]};
+    o.pGen=o.tGen>0?o.aGen/o.tGen:null;o.pFert=o.tFert>0?o.aFert/o.tFert:null;o.pAll=o.tAll>0?o.aAll/o.tAll:null;return o;});
+}
+function renderTable(){
+  let rows=tableRows(); const q=st.q.trim().toLowerCase();
+  if(q) rows=rows.filter(r=>(r.code+' '+r.name).toLowerCase().includes(q));
+  const k=st.sortKey, d=st.sortDir;
+  rows.sort((a,b)=>{const x=a[k],y=b[k]; if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1; return (typeof x==='string'?x.localeCompare(y):x-y)*d;});
+  $('tableTitle').textContent=`รายละเอียดรายพื้นที่ · ${mLabel()}`;
+  $('tableCap').textContent=`${regLabel()} · ${rows.length} พื้นที่ · หน่วย: บาท · คลิกหัวคอลัมน์เพื่อเรียง`;
+  const th='<thead><tr><th class="grp" colspan="3"></th><th class="grp" colspan="3">สินเชื่อทั่วไป (ยกเว้นปุ๋ย)</th><th class="grp" colspan="3">สินเชื่อปุ๋ย</th><th class="grp" colspan="3">รวม</th><th class="grp"></th></tr><tr>'+COLS.map(c=>`<th class="sortable" tabindex="0" data-k="${c[0]}" aria-sort="${c[0]===k?(d>0?'ascending':'descending'):'none'}">${c[1]}${c[0]===k?(d>0?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead>';
+  const body=rows.map(r=>'<tr>'+COLS.map(c=>{const v=c[2](r);
+    if(c[0][0]==='p') return `<td class="pct ${cls(v)}">${P(v)}</td>`;
+    if(c[0]==='npl') return `<td>${v==null?'–':P(v,2)}</td>`;
+    if(typeof v==='number'&&c[0]!=='region') return `<td>${N(v)}</td>`;
+    return `<td>${c[0]==='region'?'ภาค '+v:v}</td>`;}).join('')+'</tr>').join('');
+  $('tbl').innerHTML=th+'<tbody>'+body+'</tbody>';
+}
+
+/* ---------- render all ---------- */
+function renderAll(){ renderKpis(); insights(); renderCharts(); renderTable();
+  const n=$('selNote'); if(mixedStructure()){ n.textContent='เลือกเดือนคาบเกี่ยวโครงสร้างสาขาเก่า (ม.ค.–มี.ค.) และใหม่ (เม.ย. เป็นต้นไป): การจัดอันดับและตารางรายพื้นที่จะใช้เฉพาะเดือนตั้งแต่ เม.ย. เป็นต้นไป ส่วนระดับภาคและภาพรวมใช้ทุกเดือนที่เลือก'; n.classList.remove('hidden'); } else n.classList.add('hidden'); }
+
+/* ---------- exports ---------- */
+async function saveFile(name,data){
+  let dl=null; try{ if(window.claude&&claude.use) dl=await claude.use('downloads'); }catch(e){}
+  if(!dl){ // standalone (e.g. GitHub Pages): normal browser download
+    const blob=data instanceof Blob?data:new Blob([data]); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000); toast('ดาวน์โหลดไฟล์แล้ว: '+name); return true; }
+  try{ await dl.save({filename:name,data}); toast('บันทึกไฟล์แล้ว: '+name); return true; }
+  catch(e){ if(e&&e.code!=='declined') toast('บันทึกไม่สำเร็จ: '+(e.message||e.code)); return false; }
+}
+async function busy(btn,label,fn){
+  const old=btn.textContent; btn.disabled=true; btn.textContent=label;
+  try{ await fn(); }catch(e){ console.error(e); toast('สร้างไฟล์ไม่สำเร็จ: '+(e.message||e)); }
+  btn.disabled=false; btn.textContent=old;
+}
+const stamp = () => `ยอดปล่อยสินเชื่อ${YEAR}_${mShort()}`;
+
+function exportXlsx(){
+  const wb=XLSX.utils.book_new();
+  const addSheet=(name,aoa,widths,pctCols=[],numCols=[])=>{
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=widths.map(w=>({wch:w}));
+    const rg=XLSX.utils.decode_range(ws['!ref']);
+    for(let R=1;R<=rg.e.r;R++){ pctCols.forEach(C=>{const c=ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c&&typeof c.v==='number') c.z='0.0%';});
+      numCols.forEach(C=>{const c=ws[XLSX.utils.encode_cell({r:R,c:C})]; if(c&&typeof c.v==='number') c.z='#,##0';}); }
+    ws['!freeze']={xSplit:0,ySplit:1}; XLSX.utils.book_append_sheet(wb,ws,name);
+  };
+  const n=x=>x==null?'':x;
+  // 1 monthly summary
+  const A=[['เดือน','เป้าทั่วไป','ทำได้ทั่วไป','% ทั่วไป','เป้าปุ๋ย','ทำได้ปุ๋ย','% ปุ๋ย','เป้ารวม','ทำได้รวม','% รวม']];
+  let S={t1:0,a1:0,t2:0,a2:0};
+  MS.forEach((_,m)=>{const rs=rowsOf(m);const g=agg(rs,'gen'),f=agg(rs,'fert'),a=agg(rs,'all');
+    A.push([MF[m],g.t,g.a,n(g.p),f.t,f.a,n(f.p),a.t,a.a,n(a.p)]); S.t1+=g.t;S.a1+=g.a;S.t2+=f.t;S.a2+=f.a;});
+  A.push(['รวมสะสม',S.t1,S.a1,S.t1?S.a1/S.t1:'',S.t2,S.a2,S.t2?S.a2/S.t2:'',S.t1+S.t2,S.a1+S.a2,(S.t1+S.t2)?(S.a1+S.a2)/(S.t1+S.t2):'']);
+  addSheet('สรุปรายเดือน',A,[16,14,14,10,14,14,10,14,14,10],[3,6,9],[1,2,4,5,7,8]);
+  // 2 by region
+  const B=[['เดือน','ภาค','เป้าทั่วไป','ทำได้ทั่วไป','% ทั่วไป','เป้าปุ๋ย','ทำได้ปุ๋ย','% ปุ๋ย','เป้ารวม','ทำได้รวม','% รวม']];
+  MS.forEach((_,m)=>[1,2,3,4].filter(r=>st.regions.has(r)).forEach(r=>{const rs=rowsOf(m,r);const g=agg(rs,'gen'),f=agg(rs,'fert'),a=agg(rs,'all');B.push([MF[m],'ภาค '+r,g.t,g.a,n(g.p),f.t,f.a,n(f.p),a.t,a.a,n(a.p)]);}));
+  addSheet('รายภาค x เดือน',B,[14,10,14,14,10,14,14,10,14,14,10],[4,7,10],[2,3,5,6,8,9]);
+  // 3 focus month areas
+  const C=[['รหัส','พื้นที่','ภาค','เขต','เป้าทั่วไป','ทำได้ทั่วไป','% ทั่วไป','เป้าปุ๋ย','ทำได้ปุ๋ย','% ปุ๋ย','เป้ารวม','ทำได้รวม','% รวม','NPL']];
+  tableRows().sort((a,b)=>String(a.code).localeCompare(String(b.code))).forEach(r=>C.push([r.code,r.name,'ภาค '+r.region,r.zone?('เขต '+r.zone):'',r.tGen,r.aGen,n(r.pGen),r.tFert,r.aFert,n(r.pFert),r.tAll,r.aAll,n(r.pAll),n(r.npl)]));
+  addSheet('รายพื้นที่ (ช่วงที่เลือก)',C,[11,26,9,8,13,13,9,13,13,9,13,13,9,9],[6,9,12,13],[4,5,7,8,10,11]);
+  // 4 NPL
+  const nm=nplMonths(), nmap=new Map();
+  DATA.filter(r=>nm.includes(r[0])).forEach(r=>{const k=r[3]; if(!nmap.has(k)) nmap.set(k,{code:r[3],name:r[4],region:r[1],v:{}}); nmap.get(k).v[r[0]]=r[9];});
+  const D=[['รหัส','พื้นที่','ภาค',...nm.map(m=>'NPL '+MS[m])]];
+  [...nmap.values()].filter(x=>st.regions.has(x.region)).sort((a,b)=>String(a.code).localeCompare(String(b.code))).forEach(x=>D.push([x.code,x.name,'ภาค '+x.region,...nm.map(m=>n(x.v[m]))]));
+  addSheet('NPL',D,[11,26,9,12,12,12],[3,4,5]);
+  // 5 raw
+  const E=[['เดือน','ภาค','เขต','รหัส','พื้นที่','เป้าทั่วไป','ทำได้ทั่วไป','% ทั่วไป','เป้าปุ๋ย','ทำได้ปุ๋ย','% ปุ๋ย','เป้ารวม','ทำได้รวม','% รวม','NPL']];
+  DATA.forEach(r=>{const tA=r[5]+r[7],aA=r[6]+r[8];E.push([MF[r[0]],'ภาค '+r[1],r[2]?('เขต '+r[2]):'',r[3],r[4],r[5],r[6],r[5]>0?r[6]/r[5]:'',r[7],r[8],r[7]>0?r[8]/r[7]:'',tA,aA,tA>0?aA/tA:'',n(r[9])]);});
+  addSheet('ข้อมูลทั้งหมด',E,[13,9,8,11,26,13,13,9,13,13,9,13,13,9,9],[7,10,13,14],[5,6,8,9,11,12]);
+  { const AN=analysis();
+    const S1=[['รหัส','พื้นที่','ภาค','% ทำได้','NPL','กลุ่ม']]; AN.pts.forEach(x=>S1.push([x.code,x.name,'ภาค '+x.region,x.p,x.npl,x.q]));
+    addSheet('ผลงานเทียบ NPL',S1,[11,26,9,10,10,26],[3,4]);
+    const S2=[['ลำดับ','รหัส','พื้นที่','ภาค','เป้า','ทำได้','ขาดเป้า','% ทำได้','% สะสมของยอดขาด']]; AN.gaps.forEach((x,i)=>S2.push([i+1,x.code,x.name,'ภาค '+x.region,x.t,x.a,x.gap,x.p,x.cum]));
+    addSheet('Pareto ยอดขาดเป้า',S2,[7,11,26,9,14,14,14,10,14],[7,8],[4,5,6]);
+    const pc=AN.pace, S3=[['เดือน','ทำได้','เป้า','ทำได้สะสม','เป้าสะสม']]; let a0=0,t0=0;
+    monthSeries(st.type).forEach((x,i)=>{a0+=x.a;t0+=x.t;S3.push([MF[i],x.a,x.t,a0,t0]);});
+    S3.push([]); S3.push(['อัตราเฉลี่ย '+pc.k+' เดือนล่าสุด (ทำได้)',pc.runA]); S3.push(['เป้าเฉลี่ย '+pc.k+' เดือนล่าสุด',pc.runT]);
+    if(pc.remaining>0){ S3.push(['เดือนที่เหลือ',pc.remaining]); S3.push(['เป้าทั้งปีโดยประมาณ',pc.estAnnualT]); S3.push(['ต้องปล่อยต่อเดือน',pc.need]); S3.push(['คาดการณ์สิ้นปี (อัตราเท่าเดิม)',pc.projA]); }
+    addSheet('ยอดสะสมและคาดการณ์',S3,[34,16,16,16,16],[],[1,2,3,4]);
+    const S4=[['รหัส','พื้นที่','ภาค',...AN.hm.map(m=>MS[m]),'ถึงเป้า (เดือน)','จำนวนเดือน','ต่ำกว่า 80% ติดกัน']];
+    AN.rows.forEach(r=>S4.push([r.code,r.name,'ภาค '+r.region,...AN.hm.map(m=>n(r.v[m])),r.hit,r.n,r.streak]));
+    addSheet('Heatmap รายพื้นที่',S4,[11,26,9,...AN.hm.map(()=>9),14,12,16],AN.hm.map((_,i)=>3+i));
+  }
+  // notes
+  const ins=insights();
+  const NT=[['ข้อสังเกต / หมายเหตุ'],...ins.map(x=>[x]),[''],...[...document.querySelectorAll('#notes li')].map(li=>[li.textContent])];
+  const wn=XLSX.utils.aoa_to_sheet(NT); wn['!cols']=[{wch:130}]; XLSX.utils.book_append_sheet(wb,wn,'ข้อสังเกต');
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  return saveFile(stamp()+'.xlsx',new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
+
+async function exportPptx(){
+  const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; // 13.33 x 7.5
+  const FONT='Tahoma', INK='1F2937', GREY='6B7280', BLUE='2A78D6', ORG='EB6834', AQ='1BAF7A', YEL='EDA100', TGT='8A909C', RED='D23B3A', GRN='0B8A55';
+  const RC=[BLUE,ORG,AQ,YEL];
+  const f=st.month, t=st.type, reg=0, v=computeView(), ins=insights();
+  const head=(s,title,sub)=>{ s.background={color:'FFFFFF'}; s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:0.12,fill:{color:BLUE}});
+    s.addText(title,{x:0.5,y:0.3,w:12.3,h:0.6,fontFace:FONT,fontSize:24,bold:true,color:INK});
+    if(sub) s.addText(sub,{x:0.5,y:0.88,w:12.3,h:0.4,fontFace:FONT,fontSize:13,color:GREY});
+    s.addText(`ผลการดำเนินงานปล่อยสินเชื่อ ปี ${YEAR}`,{x:0.5,y:7.05,w:8,h:0.3,fontFace:FONT,fontSize:10,color:GREY}); };
+  const take=(s,text,y=6.35)=>s.addText(text,{x:0.5,y,w:12.3,h:0.6,fontFace:FONT,fontSize:13,color:INK,fill:{color:'EEF3FA'},margin:8,valign:'middle'});
+  const axisOpt={catAxisLabelFontFace:FONT,valAxisLabelFontFace:FONT,catAxisLabelFontSize:11,valAxisLabelFontSize:11,legendFontFace:FONT,legendFontSize:11,showLegend:true,legendPos:'t',valGridLine:{color:'E5E7EB',size:0.5},catGridLine:{style:'none'},dataLabelFontFace:FONT};
+  // 1 title
+  let s=pptx.addSlide(); s.background={color:'1F4F99'};
+  s.addText('ผลการดำเนินงานปล่อยสินเชื่อ',{x:0.8,y:2.2,w:11.5,h:1,fontFace:FONT,fontSize:40,bold:true,color:'FFFFFF'});
+  s.addText(`ปี ${YEAR} · ข้อมูล ${MS[0]} – ${MS[LAST]} · เดือนที่ดู: ${mLabel()} · ${regLabel()}`,{x:0.8,y:3.3,w:11.5,h:0.6,fontFace:FONT,fontSize:20,color:'DCE8F8'});
+  s.addText('สินเชื่อทั่วไป (ยกเว้นปุ๋ย) และ สินเชื่อปุ๋ย · หน่วย: ล้านบาท',{x:0.8,y:3.95,w:11.5,h:0.5,fontFace:FONT,fontSize:14,color:'DCE8F8'});
+  // 2 KPI
+  s=pptx.addSlide(); head(s,'ภาพรวมผลงาน',`${mLabel()} · ${regLabel()}`);
+  const k=[[`ยอดปล่อย ${mLabel()}`,M(v.all.a)+' ล้านบาท',`ทำได้ ${P(v.all.p)} ของเป้า ${M(v.all.t)}`],[`สะสม ${MS[0]}–${MS[f]}`,M(v.ytd.a)+' ล้านบาท',`ทำได้ ${P(v.ytd.p)} ของเป้า ${M(v.ytd.t)}`],
+    ['สินเชื่อทั่วไป (ยกเว้นปุ๋ย)',P(v.gen.p),`${M(v.gen.a)} จาก ${M(v.gen.t)} ล้านบาท`],['สินเชื่อปุ๋ย',P(v.fert.p),`${M(v.fert.a)} จาก ${M(v.fert.t)} ล้านบาท`],
+    ['พื้นที่ถึงเป้า',`${v.as.filter(x=>x.p>=1).length} / ${v.as.length}`,'แห่ง'],[v.nmo==null?'NPL เฉลี่ย':`NPL เฉลี่ย ${MS[v.nmo]}`,v.nplAvg==null?'–':P(v.nplAvg,2),'เฉลี่ยรายพื้นที่']];
+  k.forEach((c,i)=>{const x=0.5+(i%3)*4.15,y=1.5+Math.floor(i/3)*2.1;
+    s.addShape(pptx.ShapeType.roundRect,{x,y,w:3.95,h:1.9,fill:{color:'F3F4F6'},line:{color:'E5E7EB'},rectRadius:0.1});
+    s.addText(c[0],{x:x+0.2,y:y+0.15,w:3.6,h:0.4,fontFace:FONT,fontSize:13,color:GREY});
+    s.addText(c[1],{x:x+0.2,y:y+0.6,w:3.6,h:0.7,fontFace:FONT,fontSize:28,bold:true,color:INK});
+    s.addText(c[2],{x:x+0.2,y:y+1.3,w:3.6,h:0.45,fontFace:FONT,fontSize:12,color:GREY});});
+  take(s,ins[0],5.9);
+  // 3 monthly line
+  const ms=monthSeries(t);
+  s=pptx.addSlide(); head(s,'ยอดปล่อยรายเดือน เทียบเป้าหมาย',`${TYPES[t]} · ${regLabel()} · ล้านบาท`);
+  s.addChart(pptx.charts.LINE,[{name:'เป้าหมาย',labels:MS,values:ms.map(x=>+(x.t/1e6).toFixed(1))},{name:'ทำได้',labels:MS,values:ms.map(x=>+(x.a/1e6).toFixed(1))}],
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[TGT,BLUE],lineSize:3,lineDataSymbolSize:8,valAxisTitle:'ล้านบาท',showValAxisTitle:true,valAxisTitleFontFace:FONT});
+  take(s,ins[1]);
+  // 4 pct by region
+  s=pptx.addSlide(); head(s,'% ทำได้ตามเป้า รายภาค',`${TYPES[t]} · ${MS[0]} – ${MS[LAST]}`);
+  const rl=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({name:'ภาค '+r,labels:MS,values:monthSeries(t,r).map(x=>x.p==null?null:+(x.p*100).toFixed(1))}));
+  rl.push({name:'รวม',labels:MS,values:ms.map(x=>x.p==null?null:+(x.p*100).toFixed(1))});
+  s.addChart(pptx.charts.LINE,rl,{x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[...[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),INK],lineSize:3,lineDataSymbolSize:7,valAxisLabelFormatCode:'0"%"'});
+  const bestR=[...v.regs].filter(x=>x.p!=null).sort((a,b)=>b.p-a.p); take(s,bestR.length>1?ins[2]:ins[0]);
+  // 5 stacked by type
+  const g=monthSeries('gen'),fe=monthSeries('fert');
+  s=pptx.addSlide(); head(s,'ยอดปล่อยแยกประเภทสินเชื่อ รายเดือน',`${regLabel()} · ล้านบาท`);
+  s.addChart(pptx.charts.BAR,[{name:'ทั่วไป (ยกเว้นปุ๋ย)',labels:MS,values:g.map(x=>+(x.a/1e6).toFixed(1))},{name:'ปุ๋ย',labels:MS,values:fe.map(x=>+(x.a/1e6).toFixed(1))}],
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,barDir:'col',barGrouping:'stacked',chartColors:[BLUE,AQ],showValue:false});
+  take(s,v.gen.p!=null&&v.fert.p!=null?ins.find(x=>x.startsWith('สินเชื่อปุ๋ย'))||ins[0]:ins[0]);
+  // 6 gen vs fert pct
+  s=pptx.addSlide(); head(s,'สินเชื่อทั่วไป เทียบ สินเชื่อปุ๋ย (% ทำได้)',`${regLabel()}`);
+  s.addChart(pptx.charts.LINE,[{name:'ทั่วไป (ยกเว้นปุ๋ย)',labels:MS,values:g.map(x=>x.p==null?null:+(x.p*100).toFixed(1))},{name:'ปุ๋ย',labels:MS,values:fe.map(x=>x.p==null?null:+(x.p*100).toFixed(1))}],
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,AQ],lineSize:3,lineDataSymbolSize:8,valAxisLabelFormatCode:'0"%"'});
+  // 7 region at focus
+  const regs=[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({r,...agg(selRows(r),t)}));
+  s=pptx.addSlide(); head(s,`เป้า เทียบ ทำได้ รายภาค · ${mLabel()}`,t==='all'?'% ทำได้ แยกสินเชื่อทั่วไป / ปุ๋ย / รวม':`${TYPES[t]} · ล้านบาท`);
+  if(t==='all'){
+    const rgl=regs.map(x=>`ภาค ${x.r}`);
+    s.addChart(pptx.charts.BAR,[{name:'ทั่วไป (ยกเว้นปุ๋ย)',labels:rgl,values:regs.map(x=>{const a=agg(selRows(x.r),'gen');return a.p==null?0:+(a.p*100).toFixed(1);})},{name:'ปุ๋ย',labels:rgl,values:regs.map(x=>{const a=agg(selRows(x.r),'fert');return a.p==null?0:+(a.p*100).toFixed(1);})},{name:'รวม',labels:rgl,values:regs.map(x=>+((x.p||0)*100).toFixed(1))}],
+      {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,barDir:'col',barGrouping:'clustered',chartColors:[BLUE,AQ,INK],showValue:true,dataLabelFontSize:11,dataLabelFormatCode:'0.0"%"'});
+  } else
+  s.addChart(pptx.charts.BAR,[{name:'เป้าหมาย',labels:regs.map(x=>`ภาค ${x.r} (${P(x.p,0)})`),values:regs.map(x=>+(x.t/1e6).toFixed(1))},{name:'ทำได้',labels:regs.map(x=>`ภาค ${x.r} (${P(x.p,0)})`),values:regs.map(x=>+(x.a/1e6).toFixed(1))}],
+    {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,barDir:'col',barGrouping:'clustered',chartColors:[TGT,BLUE],showValue:true,dataLabelFontSize:11,dataLabelFormatCode:'0.0'});
+  // 8 rankings
+  const as=areaStats(f,t).sort((a,b)=>b.p-a.p), top=as.slice(0,10), bot=as.slice(-10).reverse();
+  s=pptx.addSlide(); head(s,`พื้นที่ผลงานสูงสุดและต่ำสุด · ${mLabel()}`,`${TYPES[t]} · ${regLabel()} · % ทำได้ตามเป้า`);
+  const rkOpt=c=>({y:1.4,w:6.1,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[c],showValue:true,dataLabelFormatCode:'0"%"',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
+  if(t==='all'){
+    const sp=(list,x0)=>s.addChart(pptx.charts.BAR,[{name:'ทั่วไป (ยกเว้นปุ๋ย)',labels:list.map(x=>x.name),values:list.map(x=>x.pg==null?0:+(x.pg*100).toFixed(0))},{name:'ปุ๋ย',labels:list.map(x=>x.name),values:list.map(x=>x.pf==null?0:+(x.pf*100).toFixed(0))}],{x:x0,y:1.4,w:6.1,h:4.8,...axisOpt,showLegend:true,barDir:'bar',chartColors:[BLUE,AQ],showValue:true,dataLabelFormatCode:'0"%"',dataLabelFontSize:9,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
+    sp(top,0.4); sp(bot,6.8);
+    s.addText('ซ้าย: 10 พื้นที่สูงสุด · ขวา: 10 พื้นที่ต่ำสุด (เรียงตามผลรวม แยกทั่วไป/ปุ๋ย)',{x:0.5,y:1.2,w:12.3,h:0.3,fontFace:FONT,fontSize:11,color:GREY});
+  } else {
+  s.addChart(pptx.charts.BAR,[{name:'สูงสุด',labels:top.map(x=>x.name),values:top.map(x=>+(x.p*100).toFixed(0))}],{x:0.4,...rkOpt(GRN)});
+  s.addChart(pptx.charts.BAR,[{name:'ต่ำสุด',labels:bot.map(x=>x.name),values:bot.map(x=>+(x.p*100).toFixed(0))}],{x:6.8,...rkOpt(RED)});
+  }
+  take(s,ins.find(x=>x.startsWith('พื้นที่ที่ควรติดตาม'))||ins[0]);
+  // 9 buckets
+  const bkL=['< 50%','50–79%','80–99%','≥ 100%'], bkF=[x=>x<.5,x=>x>=.5&&x<.8,x=>x>=.8&&x<1,x=>x>=1];
+  s=pptx.addSlide(); head(s,`การกระจายระดับผลงานของพื้นที่ · ${mLabel()}`,`${TYPES[t]} · ${regLabel()} · จำนวนพื้นที่`);
+  s.addChart(pptx.charts.BAR,[{name:'จำนวนพื้นที่',labels:bkL,values:bkF.map(fn=>as.filter(a=>fn(a.p)).length)}],{x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,showLegend:false,barDir:'col',chartColors:[RED,ORG,YEL,GRN],showValue:true,dataLabelFontSize:12});
+  take(s,ins.find(x=>x.startsWith('พื้นที่ถึงเป้า'))||ins[0]);
+  // 10 NPL
+  if(v.nmo!=null){
+    s=pptx.addSlide(); head(s,'NPL รายภาค และพื้นที่ NPL สูงสุด',`ค่าเฉลี่ยรายพื้นที่ (ไม่ถ่วงน้ำหนัก) · ${nplFrom()} – ${MS[v.nmo]}`);
+    const nmL=nplMonths().filter(m=>m<=v.nmo);
+    s.addChart(pptx.charts.LINE,[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>({name:'ภาค '+r,labels:nmL.map(m=>MS[m]),values:nmL.map(m=>{const a=avg(nplRows(m,r).map(x=>x[9]));return a==null?null:+(a*100).toFixed(2);})})),
+      {x:0.4,y:1.4,w:6.1,h:4.8,...axisOpt,chartColors:[1,2,3,4].filter(r=>st.regions.has(r)).map(r=>RC[r-1]),lineSize:3,lineDataSymbolSize:8,valAxisLabelFormatCode:'0.0"%"'});
+    const nr=nplRows(v.nmo).sort((a,b)=>b[9]-a[9]).slice(0,10);
+    s.addChart(pptx.charts.BAR,[{name:'NPL',labels:nr.map(r=>r[4]),values:nr.map(r=>+(r[9]*100).toFixed(1))}],{x:6.8,y:1.4,w:6.1,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[RED],showValue:true,dataLabelFormatCode:'0.0"%"',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
+    take(s,ins.find(x=>x.startsWith('NPL'))||ins[0]);
+  }
+  { const AN=analysis(), pc=AN.pace;
+    // A scatter
+    if(AN.pts.length){
+      s=pptx.addSlide(); head(s,'ผลงาน เทียบ NPL รายพื้นที่',`${TYPES[t]} · ${regLabel()} · % ทำได้ (${mLabel()}) เทียบ NPL ${AN.nplSrc||''}`);
+      const rg=[1,2,3,4].filter(r=>st.regions.has(r));
+      s.addChart(pptx.charts.SCATTER,[{name:'X',values:AN.pts.map(x=>+(x.p*100).toFixed(1))},...rg.map(r=>({name:'ภาค '+r,values:AN.pts.map(x=>x.region===r?+(x.npl*100).toFixed(2):null)}))],
+        {x:0.5,y:1.4,w:8.2,h:4.8,...axisOpt,chartColors:rg.map(r=>RC[r-1]),lineSize:0,lineDataSymbolSize:8,valAxisLabelFormatCode:'0"%"',catAxisLabelFormatCode:'0"%"',showValAxisTitle:true,valAxisTitle:'NPL',showCatAxisTitle:true,catAxisTitle:'% ทำได้ตามเป้า',valAxisTitleFontFace:FONT,catAxisTitleFontFace:FONT});
+      const qs=['ต่ำกว่าเป้า · NPL สูง','ถึงเป้า · NPL สูง','ต่ำกว่าเป้า · NPL ต่ำ','ถึงเป้า · NPL ต่ำ'], qc=[RED,YEL,ORG,GRN];
+      qs.forEach((q,i)=>{const list=AN.pts.filter(x=>x.q===q); const y=1.45+i*1.2;
+        s.addShape(pptx.ShapeType.rect,{x:8.95,y,w:0.12,h:1.05,fill:{color:qc[i]},line:{color:qc[i]}});
+        s.addText([{text:`${q}: ${list.length} แห่ง`,options:{bold:true,breakLine:true}},{text:list.slice(0,5).map(x=>x.name).join(', ')+(list.length>5?' …':''),options:{fontSize:10,color:GREY}}],{x:9.15,y,w:3.8,h:1.05,fontFace:FONT,fontSize:12,color:INK,valign:'top'});});
+      take(s,`เส้นแบ่ง: เป้า 100% และ NPL 10% · กลุ่มเสี่ยง (ต่ำกว่าเป้าและ NPL สูง) ${AN.pts.filter(x=>x.q===qs[0]).length} พื้นที่ ควรจัดลำดับติดตามก่อน`);
+    }
+    // B pareto
+    if(AN.gaps.length){
+      const tp=AN.gaps.slice(0,15);
+      s=pptx.addSlide(); head(s,'พื้นที่ที่ขาดเป้ามากที่สุด (Pareto)',`${TYPES[t]} · ${regLabel()} · ${mLabel()} · ยอดขาดเป้า ล้านบาท`);
+      s.addChart(pptx.charts.BAR,[{name:'ยอดขาดเป้า',labels:tp.map(x=>`${x.name} (สะสม ${(x.cum*100).toFixed(0)}%)`),values:tp.map(x=>+(x.gap/1e6).toFixed(2))}],
+        {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[RED],showValue:true,dataLabelFormatCode:'0.00',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
+      const s10=AN.gaps.slice(0,10).reduce((a,x)=>a+x.gap,0); take(s,`ขาดเป้ารวม ${M(AN.gTot)} ล้านบาท จาก ${AN.gaps.length} พื้นที่ · 10 พื้นที่แรกคิดเป็น ${(s10/AN.gTot*100).toFixed(0)}% ของยอดขาดทั้งหมด`);
+    }
+    // C pace
+    s=pptx.addSlide(); head(s,'ยอดสะสม เทียบ เป้าสะสม และคาดการณ์สิ้นปี',`${TYPES[t]} · ${regLabel()} · ล้านบาท`);
+    const Lb=pc.labels, ix=no=>no-pc.firstNo, li=ix(pc.lastNo), ar=()=>Lb.map(()=>null), A1=ar(),T1=ar(),PA=ar(),PT=ar();
+    pc.monthNos.forEach((no,i)=>{A1[ix(no)]=+(pc.cumA[i]/1e6).toFixed(1);T1[ix(no)]=+(pc.cumT[i]/1e6).toFixed(1);});
+    if(pc.remaining>0){PA[li]=A1[li];PT[li]=T1[li];for(let j=1;j<=pc.remaining;j++){PA[li+j]=+((pc.ytdA+j*pc.runA)/1e6).toFixed(1);PT[li+j]=+((pc.ytdT+j*pc.runT)/1e6).toFixed(1);}}
+    s.addChart(pptx.charts.LINE,[{name:'ยอดสะสม',labels:Lb,values:A1},{name:'เป้าสะสม',labels:Lb,values:T1},{name:'คาดการณ์',labels:Lb,values:PA},{name:'เป้าประมาณการ',labels:Lb,values:PT}],
+      {x:0.5,y:1.4,w:12.3,h:4.8,...axisOpt,chartColors:[BLUE,TGT,'7FB0F5','C5C9D1'],lineSize:3,lineDataSymbolSize:6});
+    take(s,pc.remaining>0?`ต้องปล่อยเฉลี่ย ${M(pc.need)} ล้านบาท/เดือน ในอีก ${pc.remaining} เดือน (อัตราปัจจุบัน ${M(pc.runA)}) · คาดการณ์สิ้นปี ${M(pc.projA)} ล้านบาท = ${P(pc.estAnnualT?pc.projA/pc.estAnnualT:null)} ของเป้าประมาณ ${M(pc.estAnnualT)} (เป้า ${MS12[pc.lastNo+1]}–ธ.ค. ประมาณจากค่าเฉลี่ย ${pc.k} เดือนล่าสุด)`:`ทั้งปีทำได้ ${M(pc.ytdA)} ล้านบาท`);
+    // D heatmap (worst 18)
+    const hr=AN.rows.slice(0,18), cell=v=>v==null?'FFFFFF':v>=1?'CDEBDD':v>=.8?'F6E3C1':v>=.5?'F9D6C6':'F5C6C6';
+    s=pptx.addSlide(); head(s,'พื้นที่ที่ต้องติดตาม: % ทำได้รายเดือน',`${TYPES[t]} · ${regLabel()} · 18 พื้นที่ที่ต่ำกว่า 80% ติดต่อกันนานที่สุด`);
+    const hdr=['พื้นที่','ภาค',...AN.hm.map(m=>MS[m]),'ถึงเป้า','ต่ำกว่า 80% ติดกัน'].map(x=>({text:x,options:{bold:true,fill:{color:'F3F4F6'},align:'center'}}));
+    const trs=hr.map(r=>[{text:r.name},{text:'ภาค '+r.region,options:{align:'center'}},...AN.hm.map(m=>{const v=r.v[m];return {text:v==null?'–':(v*100).toFixed(0)+'%',options:{fill:{color:cell(v)},align:'center'}};}),{text:`${r.hit}/${r.n}`,options:{align:'center'}},{text:r.streak?r.streak+' เดือน':'–',options:{align:'center',bold:r.streak>=3,color:r.streak>=3?RED:INK}}]);
+    const nc=AN.hm.length+4, cw=[2.2,0.8,...AN.hm.map(()=>Math.max(0.55,(12.3-2.2-0.8-1-1.4)/AN.hm.length)),1,1.4];
+    s.addTable([hdr,...trs],{x:0.5,y:1.35,w:cw.reduce((a,b)=>a+b,0),colW:cw,fontFace:FONT,fontSize:10,color:INK,border:{type:'solid',color:'E5E7EB',pt:0.5},rowH:0.27});
+  }
+  // 11 insights
+  s=pptx.addSlide(); head(s,'ข้อสังเกตสำหรับการตัดสินใจ',`${mLabel()} · ${regLabel()}`);
+  s.addText(ins.map(x=>({text:x,options:{bullet:true,breakLine:true}})),{x:0.6,y:1.5,w:12.1,h:5.2,fontFace:FONT,fontSize:16,color:INK,valign:'top',paraSpaceAfter:8});
+  const blob=await pptx.write({outputType:'blob'});
+  return saveFile(stamp()+'.pptx',blob);
+}
+
+async function exportPdf(){
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const PW=297,PH=210,MG=8,W=PW-2*MG; let y=MG;
+  const bg=css('--bg');
+  document.body.classList.add('capturing');
+  const blocks=[...document.querySelectorAll('[data-pdf]')];
+  for(const el of blocks){
+    const cv=await html2canvas(el,{scale:1.6,backgroundColor:bg,useCORS:true,logging:false,ignoreElements:n=>n.hasAttribute&&n.hasAttribute('data-noexport')});
+    const h=cv.height*W/cv.width;
+    if(y+h>PH-MG && y>MG){ doc.addPage(); y=MG; }
+    const img=cv.toDataURL('image/jpeg',0.92);
+    doc.addImage(img,'JPEG',MG,y,W,Math.min(h,PH-2*MG)); y+=h+4;
+  }
+  document.body.classList.remove('capturing');
+  return saveFile(stamp()+'.pdf',doc.output('blob'));
+}
+
+/* ---------- wiring ---------- */
+
+/* ---------- deep analysis ---------- */
+function hexA(hex,a){ hex=String(hex).trim().replace('#',''); if(hex.length===3) hex=hex.split('').map(c=>c+c).join(''); const n=parseInt(hex.slice(0,6),16); if(!Number.isFinite(n)) return hex; return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+function analysis(){
+  const t=st.type, as=areaStats(0,t);
+  // 1 performance vs NPL
+  let nplSrc=null, pts=as.filter(x=>x.npl!=null).map(x=>({...x}));
+  if(pts.length){ const nm=[...st.months].filter(m=>nplMonths().includes(m)).sort((a,b)=>a-b); nplSrc=nm.length===1?MS[nm[0]]:`เฉลี่ย ${nm.map(m=>MS[m]).join(', ')}`; }
+  else { const nm=nplMonths(); if(nm.length){ const lm=nm[nm.length-1]; const mp=new Map(DATA.filter(r=>r[0]===lm&&r[9]!=null).map(r=>[r[3],r[9]])); pts=as.filter(x=>mp.has(x.code)).map(x=>({...x,npl:mp.get(x.code)})); nplSrc=MS[lm]+' (ล่าสุดในไฟล์)'; } }
+  const quad=x=>x.p>=1?(x.npl>=.1?'ถึงเป้า · NPL สูง':'ถึงเป้า · NPL ต่ำ'):(x.npl>=.1?'ต่ำกว่าเป้า · NPL สูง':'ต่ำกว่าเป้า · NPL ต่ำ');
+  pts.forEach(x=>x.q=quad(x));
+  // 2 pareto of shortfall
+  const gaps=as.map(x=>({...x,gap:x.t-x.a})).filter(x=>x.gap>0).sort((a,b)=>b.gap-a.gap);
+  const gTot=gaps.reduce((s,x)=>s+x.gap,0); let c=0; gaps.forEach(x=>{c+=x.gap;x.cum=gTot?c/gTot:0;});
+  // 3 pace to year end (whole year, selected regions & type)
+  const ser=monthSeries(t); let ca=0,ct=0; const cumA=ser.map(x=>ca+=x.a), cumT=ser.map(x=>ct+=x.t);
+  const k=Math.min(3,ser.length), l3=ser.slice(-k), runA=avg(l3.map(x=>x.a)), runT=avg(l3.map(x=>x.t));
+  const firstNo=MNO[0], lastNo=MNO[MNO.length-1], remaining=Math.max(0,11-lastNo);
+  const estAnnualT=ct+remaining*runT, projA=ca+remaining*runA;
+  const need=remaining>0?Math.max(0,(estAnnualT-ca)/remaining):null;
+  const pace={labels:MS12.slice(firstNo,12),monthNos:MNO,cumA,cumT,runA,runT,remaining,estAnnualT,projA,need,ytdA:ca,ytdT:ct,firstNo,lastNo,k};
+  // 4 heatmap
+  const sid=STRUCT[LAST], hm=MS.map((_,i)=>i).filter(i=>STRUCT[i]===sid), byC=new Map();
+  for(const r of DATA){ if(!hm.includes(r[0])||!st.regions.has(r[1])) continue; let o=byC.get(r[3]); if(!o){o={code:r[3],name:r[4],region:r[1],v:{}};byC.set(r[3],o);} const T=tv(r,t); o.v[r[0]]=T>0?av(r,t)/T:null; }
+  const rows=[...byC.values()].map(o=>{ let streak=0; for(let i=hm.length-1;i>=0;i--){const v=o.v[hm[i]]; if(v!=null&&v<.8) streak++; else break;}
+    const vals=hm.map(m=>o.v[m]).filter(v=>v!=null); return {...o,streak,hit:vals.filter(v=>v>=1).length,n:vals.length,last:o.v[hm[hm.length-1]]}; });
+  rows.sort((a,b)=>(b.streak-a.streak)||((a.last==null?9:a.last)-(b.last==null?9:b.last)));
+  return {pts,nplSrc,gaps,gTot,pace,hm,rows};
+}
+const quadLines={id:'quadLines',afterDatasetsDraw(chart,_a,o){
+  if(!o||o.x==null) return; const {ctx,chartArea:ca,scales:{x,y}}=chart; ctx.save();
+  ctx.setLineDash([5,4]); ctx.strokeStyle=o.color; ctx.lineWidth=1.2;
+  const px=x.getPixelForValue(o.x), py=y.getPixelForValue(o.y);
+  if(px>=ca.left&&px<=ca.right){ctx.beginPath();ctx.moveTo(px,ca.top);ctx.lineTo(px,ca.bottom);ctx.stroke();}
+  if(py>=ca.top&&py<=ca.bottom){ctx.beginPath();ctx.moveTo(ca.left,py);ctx.lineTo(ca.right,py);ctx.stroke();}
+  ctx.setLineDash([]); ctx.font='600 11px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle=o.ink;
+  ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillText('ต่ำกว่าเป้า · NPL สูง (เสี่ยง)',ca.left+6,ca.top+4);
+  ctx.textAlign='right'; ctx.fillText('ถึงเป้า · NPL สูง (เฝ้าระวังคุณภาพ)',ca.right-6,ca.top+4);
+  ctx.textBaseline='bottom'; ctx.textAlign='left'; ctx.fillText('ต่ำกว่าเป้า · NPL ต่ำ (เร่งยอด)',ca.left+6,ca.bottom-4);
+  ctx.textAlign='right'; ctx.fillText('ถึงเป้า · NPL ต่ำ (ดี)',ca.right-6,ca.bottom-4); ctx.restore(); }};
+Chart.register(quadLines);
+function renderAnalysis(){
+  const th=theme(), t=st.type, A=analysis();
+  /* 11 scatter */
+  $('c11').textContent=`${TYPES[t]} · ${regLabel()} · แกนนอน = % ทำได้ (${mLabel()}) · แกนตั้ง = NPL ${A.nplSrc||''} · เส้นประ = เป้า 100% และ NPL 10%`;
+  const regs=[1,2,3,4].filter(r=>st.regions.has(r));
+  mk('ch11',{type:'scatter',data:{datasets:regs.map(r=>({label:'ภาค '+r,data:A.pts.filter(x=>x.region===r).map(x=>({x:+(x.p*100).toFixed(1),y:+(x.npl*100).toFixed(2),n:x.name,c:x.code})),backgroundColor:hexA(th.s[r-1],.8),borderColor:th.surface,borderWidth:1.5,pointRadius:6,pointHoverRadius:8}))},
+    options:{plugins:{legend:legend(th),quadLines:{x:100,y:10,color:th.target,ink:th.ink2},tooltip:tipBase(th,{callbacks:{title:i=>{const d=i[0].raw;return `${d.c} ${d.n}`;},label:c=>[`ทำได้ ${c.raw.x.toFixed(1)}% ของเป้า`,`NPL ${c.raw.y.toFixed(2)}%`]}})},
+      scales:{x:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'% ทำได้ตามเป้า',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'NPL',color:th.ink2},ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+  const risk=A.pts.filter(x=>x.q==='ต่ำกว่าเป้า · NPL สูง').sort((a,b)=>b.npl-a.npl);
+  $('n11').textContent=A.pts.length?`กลุ่มเสี่ยง (ต่ำกว่าเป้าและ NPL ≥ 10%) ${risk.length} พื้นที่`+(risk.length?`: ${risk.slice(0,6).map(x=>x.name).join(', ')}${risk.length>6?' …':''}`:''):'ไม่มีพื้นที่ที่จับคู่ข้อมูล NPL ได้ในช่วงที่เลือก (NPL ใช้รหัสพื้นที่ชุดใหม่ตั้งแต่ เม.ย.)';
+  /* 12 pareto */
+  const top=A.gaps.slice(0,15);
+  $('c12').textContent=`${TYPES[t]} · ${regLabel()} · ${mLabel()} · ยอดขาดเป้า (เป้า − ทำได้) ล้านบาท · ตัวเลขท้ายแท่ง = % สะสมของยอดขาดทั้งหมด`;
+  mk('ch12',{type:'bar',data:{labels:top.map(x=>`${x.name} (ภ.${x.region})`),datasets:[{label:'ยอดขาดเป้า',data:top.map(x=>x.gap/1e6),backgroundColor:top.map(x=>x.cum<=.5?th.bad:hexA(th.bad,.55)),borderRadius:4,barThickness:14}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:(v,i,j)=>`${v.toFixed(2)} · สะสม ${(top[j].cum*100).toFixed(0)}%`},tooltip:tipBase(th,{callbacks:{title:i=>top[i[0].dataIndex].code+' '+top[i[0].dataIndex].name,label:c=>{const x=top[c.dataIndex];return [`ขาดเป้า ${N(x.gap)} บาท`,`ทำได้ ${P(x.p)} (${N(x.a)} / ${N(x.t)})`,`สะสม ${(x.cum*100).toFixed(1)}% ของยอดขาดทั้งหมด`];}}})},
+      scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'35%',title:{display:true,text:'ล้านบาท',color:th.ink2}}),y:Object.assign(axisBase(th),{grid:{display:false}})},layout:{padding:{right:10}}}});
+  const k10=A.gaps.slice(0,10), s10=k10.reduce((s,x)=>s+x.gap,0), n50=A.gaps.findIndex(x=>x.cum>=.5)+1;
+  $('n12').textContent=A.gaps.length?`ขาดเป้ารวม ${M(A.gTot)} ล้านบาท จาก ${A.gaps.length} พื้นที่ · 10 พื้นที่แรกคิดเป็น ${A.gTot?(s10/A.gTot*100).toFixed(0):0}% · ครึ่งหนึ่งของยอดขาดมาจาก ${n50} พื้นที่ (แท่งสีเข้ม)`:'ไม่มีพื้นที่ที่ขาดเป้าในช่วงที่เลือก';
+  /* 13 pace */
+  const pc=A.pace, L=pc.labels.length, idx=no=>no-pc.firstNo, li=idx(pc.lastNo);
+  const arr=()=>Array(L).fill(null), dA=arr(), dT=arr(), dPA=arr(), dPT=arr();
+  pc.monthNos.forEach((no,i)=>{dA[idx(no)]=pc.cumA[i]/1e6; dT[idx(no)]=pc.cumT[i]/1e6;});
+  if(pc.remaining>0){ dPA[li]=pc.ytdA/1e6; dPT[li]=pc.ytdT/1e6; for(let j=1;j<=pc.remaining;j++){dPA[li+j]=(pc.ytdA+j*pc.runA)/1e6; dPT[li+j]=(pc.ytdT+j*pc.runT)/1e6;} }
+  $('c13').textContent=`${TYPES[t]} · ${regLabel()} · ล้านบาท · ทั้งปี (ไม่ขึ้นกับเดือนที่เลือก)`;
+  const pAnn=pc.estAnnualT?pc.projA/pc.estAnnualT:null;
+  $('paceStats').innerHTML=[
+    ['สะสมถึง '+MS12[pc.lastNo],`${M(pc.ytdA)} ล้าน`,`${P(pc.ytdT?pc.ytdA/pc.ytdT:null)} ของเป้าสะสม`],
+    ['อัตราเฉลี่ย '+pc.k+' เดือนล่าสุด',`${M(pc.runA)} ล้าน/เดือน`,`เป้าเฉลี่ย ${M(pc.runT)} ล้าน/เดือน`],
+    pc.remaining>0?['ต้องปล่อยต่อเดือนเพื่อถึงเป้าทั้งปี',`${M(pc.need)} ล้าน/เดือน`,`อีก ${pc.remaining} เดือน (${MS12[pc.lastNo+1]}–ธ.ค.)`]:['เป้าทั้งปี',`${M(pc.ytdT)} ล้าน`,'ข้อมูลครบ 12 เดือน'],
+    pc.remaining>0?['คาดการณ์สิ้นปี (ถ้าอัตราเท่าเดิม)',`${M(pc.projA)} ล้าน`,`${P(pAnn)} ของเป้าทั้งปีโดยประมาณ ${M(pc.estAnnualT)}`]:['ผลทั้งปี',`${M(pc.ytdA)} ล้าน`,`${P(pc.ytdT?pc.ytdA/pc.ytdT:null)} ของเป้า`]
+  ].map(x=>`<div><span class="lab">${x[0]}</span><b>${x[1]}</b><span class="lab">${x[2]}</span></div>`).join('');
+  mk('ch13',{type:'line',data:{labels:pc.labels,datasets:[
+    {label:'ยอดสะสม',data:dA,borderColor:th.s[0],backgroundColor:hexA(th.s[0],.12),fill:true,borderWidth:3,pointRadius:4,pointBackgroundColor:th.s[0],pointBorderColor:th.surface,tension:.2},
+    {label:'เป้าสะสม',data:dT,borderColor:th.target,borderWidth:2,pointRadius:3,pointBackgroundColor:th.target,tension:.2},
+    {label:'คาดการณ์ (อัตราเท่าเดิม)',data:dPA,borderColor:th.s[0],borderDash:[3,4],borderWidth:2,pointRadius:3,pointBackgroundColor:th.surface,pointBorderColor:th.s[0],tension:.2},
+    {label:'เป้าสะสม (ประมาณการ)',data:dPT,borderColor:th.target,borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.2}]},
+    options:{interaction:{mode:'index',intersect:false},plugins:{legend:legend(th),tooltip:tipBase(th,{filter:i=>i.raw!=null,callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})} ล้านบาท`}})},
+      scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,title:{display:true,text:'ล้านบาท (สะสม)',color:th.ink2}})}}});
+  $('n13').textContent=pc.remaining>0?`เป้า ${MS12[pc.lastNo+1]}–ธ.ค. ยังไม่มีในไฟล์ จึงประมาณจากค่าเฉลี่ยเป้า ${pc.k} เดือนล่าสุด · เส้นคาดการณ์ใช้ยอดเฉลี่ย ${pc.k} เดือนล่าสุด`:'';
+  /* 14 heatmap */
+  const hmCol=v=>v==null?'transparent':v>=1?hexA(th.good,.30):v>=.8?hexA(th.warn,.30):v>=.5?hexA(css('--s2'),.30):hexA(th.bad,.38);
+  $('hmLegend').innerHTML=[['≥ 100%',hexA(th.good,.30)],['80–99%',hexA(th.warn,.30)],['50–79%',hexA(css('--s2'),.30)],['< 50%',hexA(th.bad,.38)]].map(x=>`<span><i style="background:${x[1]}"></i>${x[0]}</span>`).join('');
+  $('c14').textContent=`${TYPES[t]} · ${regLabel()} · ${MS[A.hm[0]]}–${MS[A.hm[A.hm.length-1]]} (ช่วงที่โครงสร้างพื้นที่เดียวกัน) · เรียงจากพื้นที่ที่ต่ำกว่า 80% ติดต่อกันนานที่สุด`;
+  const head='<thead><tr><th>รหัส</th><th>พื้นที่</th><th>ภาค</th>'+A.hm.map(m=>`<th style="text-align:center">${MS[m]}</th>`).join('')+'<th>ถึงเป้า</th><th>ต่ำกว่า 80% ติดกัน</th></tr></thead>';
+  const body=A.rows.map(r=>`<tr><td>${r.code}</td><td>${r.name}</td><td>ภาค ${r.region}</td>`+A.hm.map(m=>{const v=r.v[m];return `<td class="hc" style="background:${hmCol(v)}">${v==null?'–':(v*100).toFixed(0)+'%'}</td>`;}).join('')+`<td>${r.hit}/${r.n} เดือน</td><td class="streak ${r.streak>=3?'pct bad':''}">${r.streak?r.streak+' เดือน':'–'}</td></tr>`).join('');
+  $('heat').innerHTML=head+'<tbody>'+body+'</tbody>';
+  const s3=A.rows.filter(r=>r.streak>=3).length, never=A.rows.filter(r=>r.n&&r.hit===0).length;
+  $('n14').textContent=`ต่ำกว่า 80% ติดต่อกันตั้งแต่ 3 เดือนขึ้นไป ${s3} พื้นที่ · ไม่เคยถึงเป้าเลยในช่วงนี้ ${never} พื้นที่ จาก ${A.rows.length} พื้นที่`;
+}
+const __rc0=renderCharts; renderCharts=function(){ __rc0(); if(DATA.length) renderAnalysis(); };
+const SKINS=[['auto','ตามระบบ (อัตโนมัติ)'],['blue','ฟ้าคลาสสิก'],['green','เขียวเกษตร'],['warm','ส้มอุ่น'],['purple','ม่วงสงบ'],['night','กลางคืน (มืด)'],['emerald','มรกตมืด'],['mono','ขาวดำ (เหมาะกับพิมพ์)']];
+function applySkin(v,redraw){ const h=document.documentElement; if(v==='auto') h.removeAttribute('data-skin'); else h.setAttribute('data-skin',v);
+  try{localStorage.setItem('loan-skin',v);}catch(e){} if(redraw) renderCharts(); }
+function syncChips(){
+  [...$('monthChips').children].forEach((b,i)=>b.setAttribute('aria-pressed',st.months.has(i)));
+  [...$('regionChips').children].forEach(b=>{const r=+b.dataset.r; b.setAttribute('aria-pressed',r===0?st.regions.size===4:st.regions.has(r));});
+}
+function buildChips(){
+  $('monthChips').innerHTML=MS.map((m,i)=>`<button type="button" class="chip" data-m="${i}" aria-pressed="false" title="${MF[i]}">${m}</button>`).join('');
+  $('monthPresets').innerHTML=PRE.map((p,i)=>`<button type="button" class="chip preset" data-p="${i}" aria-pressed="false">${p[0]}</button>`).join('');
+}
+function afterDataChange(){
+  setCalendar(); const has=DATA.length>0;
+  $('emptyState').classList.toggle('hidden',has); $('dash').classList.toggle('hidden',!has);
+  ['btnXlsx','btnPptx','btnPdf','btnClear'].forEach(i=>$(i).disabled=!has);
+  if(!has){ $('subtitle').textContent='อัปโหลดไฟล์ Excel เพื่อเริ่มต้น'; $('h1').textContent='ผลการดำเนินงานปล่อยสินเชื่อ'; document.title='Dashboard ยอดปล่อยสินเชื่อ'; $('foot').textContent=''; return; }
+  st.months=new Set([LAST]); st.regions=new Set([1,2,3,4]); st.q='';
+  $('q').value=''; buildChips(); syncChips(); renderNotes();
+  $('h1').textContent=`ผลการดำเนินงานปล่อยสินเชื่อ ปี ${YEAR}`; document.title=`Dashboard ยอดปล่อยสินเชื่อ ปี ${YEAR}`;
+  $('srcLine').textContent=`${SRC} · ${DATA.length.toLocaleString('en-US')} แถว · ${MS[0]}–${MS[LAST]} ${YEAR}`;
+  $('foot').textContent=`แหล่งข้อมูล: ${SRC} · ตัวเลขทั้งหมดคำนวณจากไฟล์ที่ใช้อยู่`;
+  renderAll();
+}
+const MONTH_ALIAS=(()=>{const m=new Map();MF12.forEach((n,i)=>{m.set(n,i);});MS12.forEach((n,i)=>m.set(n.replace(/\./g,''),i));m.set('กุมภาพันธุ์',1);return m;})();
+const numOf=v=>{ if(v==null||v==='') return 0; const x=typeof v==='number'?v:Number(String(v).replace(/[,\s%]/g,'')); return Number.isFinite(x)?x:0; };
+function parseWorkbookRows(aoa){
+  const hi=aoa.findIndex(r=>r&&r.some(c=>String(c==null?'':c).replace(/\s+/g,'')==='เดือน'));
+  if(hi<0) throw new Error('ไม่พบหัวคอลัมน์ "เดือน" ในไฟล์ (ต้องใช้คอลัมน์ตามที่ระบุในหน้าเริ่มต้น)');
+  const H=aoa[hi].map(c=>String(c==null?'':c).replace(/\s+/g,''));
+  const f=(p,fb)=>{const i=H.findIndex(p);return i>=0?i:fb;};
+  const C={m:f(h=>h==='เดือน',0),reg:f(h=>h==='ภาค',1),zone:f(h=>h==='เขต',2),grp:f(h=>h==='กลุ่ม',3),area:f(h=>h==='พื้นที่',4),
+    t1:f(h=>h.startsWith('เป้าหมายสินเชื่อ(ประเภทอื่น'),5),a1:f(h=>h.startsWith('สาขาทำได้ยกเว้น'),6),t2:f(h=>h.startsWith('เป้าหมายสินเชื่อปุ๋ย'),8),a2:f(h=>h.startsWith('สาขาทำได้สินเชื่อปุ๋ย'),9),npl:f(h=>h.toUpperCase()==='NPL',14)};
+  const bad=new Set(), tmp=[];
+  for(const r of aoa.slice(hi+1)){ if(!r) continue;
+    const mraw=String(r[C.m]==null?'':r[C.m]).replace(/\s+/g,''); const areaRaw=String(r[C.area]==null?'':r[C.area]).trim();
+    const grpRaw=String(r[C.grp]==null?'':r[C.grp]).trim();
+    if(!mraw||(!areaRaw&&!grpRaw)) continue;
+    const mi=MONTH_ALIAS.get(mraw.replace(/\./g,'')); if(mi==null){bad.add(mraw);continue;}
+    const rg=parseInt(String(r[C.reg]).replace(/\D/g,''),10); if(!(rg>=1&&rg<=4)){bad.add('ภาค:'+r[C.reg]);continue;}
+    const sp=areaRaw.split(/\s+/); const hasCode=sp.length>1&&/^[\d-]+$/.test(sp[0]);
+    const code=areaRaw===''?grpRaw:hasCode?sp[0]:(grpRaw||areaRaw), name=areaRaw===''?'(ไม่ระบุชื่อ) '+grpRaw:hasCode?sp.slice(1).join(' '):areaRaw;
+    const z=r[C.zone]==null?'':String(r[C.zone]).replace(/\D/g,'');
+    const npl=r[C.npl]==null||r[C.npl]===''?null:numOf(r[C.npl]);
+    tmp.push([mi,rg,z,code,name,Math.round(numOf(r[C.t1])),Math.round(numOf(r[C.a1])),Math.round(numOf(r[C.t2])),Math.round(numOf(r[C.a2])),npl]);
+  }
+  if(!tmp.length) throw new Error('ไม่พบแถวข้อมูลที่อ่านได้'+(bad.size?` (ค่าที่ไม่รู้จัก: ${[...bad].slice(0,5).join(', ')})`:''));
+  const mno=[...new Set(tmp.map(r=>r[0]))].sort((a,b)=>a-b);
+  let mx=0; tmp.forEach(r=>{if(r[9]!=null&&r[9]>mx)mx=r[9];}); if(mx>1) tmp.forEach(r=>{if(r[9]!=null)r[9]=r[9]/100;});
+  tmp.forEach(r=>{r[0]=mno.indexOf(r[0]); if(r[9]!=null) r[9]=Math.round(r[9]*1e5)/1e5;});
+  return {rows:tmp,mno,skipped:bad.size};
+}
+async function loadFile(file){
+  const buf=await file.arrayBuffer(); const wb=XLSX.read(buf,{type:'array'}); let res=null,err=null;
+  for(const nm of wb.SheetNames){ try{ res=parseWorkbookRows(XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,defval:null,raw:true})); break; }catch(e){err=e;} }
+  if(!res) throw err||new Error('อ่านไฟล์ไม่ได้');
+  const ym=file.name.match(/(25\d{2})/); const year=ym?+ym[1]:YEAR;
+  DATA=res.rows; MNO=res.mno; YEAR=year; SRC='ไฟล์ที่อัปโหลด: '+file.name;
+  try{ localStorage.setItem('loan-data',JSON.stringify({rows:res.rows,mno:res.mno,year,name:file.name})); }catch(e){}
+  afterDataChange();
+  toast(`โหลดข้อมูลแล้ว: ${res.rows.length} แถว · ${MS[0]}–${MS[LAST]} ${YEAR}`+(res.skipped?` · ข้ามค่าที่อ่านไม่ได้ ${res.skipped} แบบ`:''),5000);
+}
+function clearData(){ DATA=[]; MNO=[]; SRC=''; try{localStorage.removeItem('loan-data');}catch(e){} afterDataChange(); toast('ล้างข้อมูลแล้ว กรุณาอัปโหลดไฟล์ใหม่'); }
+function init(){
+  buildChips();
+  $('monthChips').onclick=e=>{const b=e.target.closest('button');if(!b)return;const m=+b.dataset.m;
+    if(st.months.has(m)){ if(st.months.size>1) st.months.delete(m); else return; } else st.months.add(m); syncChips();renderAll();};
+  $('monthPresets').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.months=new Set(PRE[+b.dataset.p][1]);syncChips();renderAll();};
+  $('regionChips').innerHTML='<button type="button" class="chip preset" data-r="0" aria-pressed="false">ทุกภาค</button>'+[1,2,3,4].map(r=>`<button type="button" class="chip" data-r="${r}" aria-pressed="false">ภาค ${r}</button>`).join('');
+  $('regionChips').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=+b.dataset.r;
+    if(r===0) st.regions=new Set([1,2,3,4]); else if(st.regions.size===4) st.regions=new Set([r]); else if(st.regions.has(r)){ if(st.regions.size>1) st.regions.delete(r); else return; } else st.regions.add(r);
+    syncChips();renderAll();};
+  $('selSkin').innerHTML=SKINS.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('');
+  let sv='auto'; try{sv=localStorage.getItem('loan-skin')||'auto';}catch(e){} if(!SKINS.some(s=>s[0]===sv)) sv='auto';
+  $('selSkin').value=sv; applySkin(sv,false); $('selSkin').onchange=e=>applySkin(e.target.value,true);
+  $('fileIn').onchange=async e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ console.error(err); toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } e.target.value=''; };
+  $('btnUpload').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fileIn').click();}});
+  $('btnClear').onclick=clearData;
+  document.querySelectorAll('.chart-box').forEach(b=>{ const c=b.closest('.card'); if(!c) return; c.classList.add('zoomable');
+    const e=document.createElement('button'); e.type='button'; e.className='enl'; e.setAttribute('data-noexport',''); e.setAttribute('aria-label','ขยายกราฟ'); e.textContent='⤢ ขยาย'; c.appendChild(e); });
+  document.addEventListener('click',e=>{ if(e.target.closest('#zoom')) return; const c=e.target.closest('.card.zoomable'); if(!c) return; const cv=c.querySelector('canvas'); if(cv) openZoom(cv.id,c); });
+  $('zoom').addEventListener('click',e=>{ if(e.target===$('zoom')||e.target.closest('#zClose')) closeZoom(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeZoom(); });
+  const es=$('emptyState'); ['dragenter','dragover'].forEach(n=>document.addEventListener(n,e=>{e.preventDefault(); if(!DATA.length) es.classList.add('drag');}));
+  ['dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{ if(n==='dragleave'&&e.relatedTarget) return; es.classList.remove('drag'); }));
+  document.addEventListener('drop',async e=>{ e.preventDefault(); const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } });
+  $('segType').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.type=b.dataset.v;[...$('segType').children].forEach(x=>x.setAttribute('aria-pressed',x===b));renderAll();};
+  syncChips();
+  $('q').oninput=e=>{st.q=e.target.value;renderTable();};
+  $('tbl').addEventListener('click',e=>{const th=e.target.closest('th.sortable');if(!th)return;const k=th.dataset.k;if(st.sortKey===k)st.sortDir*=-1;else{st.sortKey=k;st.sortDir=(k==='code'||k==='name'||k==='region')?1:-1;}renderTable();});
+  $('tbl').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const th=e.target.closest('th.sortable');if(th){e.preventDefault();th.click();}}});
+  $('btnXlsx').onclick=()=>busy($('btnXlsx'),'กำลังสร้าง Excel…',exportXlsx);
+  $('btnPptx').onclick=()=>busy($('btnPptx'),'กำลังสร้าง PowerPoint…',exportPptx);
+  $('btnPdf').onclick=()=>busy($('btnPdf'),'กำลังสร้าง PDF…',exportPdf);
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('loan-data')||'null'); }catch(e){}
+  if(saved&&saved.rows&&saved.rows.length){ DATA=saved.rows; MNO=saved.mno; YEAR=saved.year||YEAR; SRC='ไฟล์ที่อัปโหลด: '+saved.name; }
+  afterDataChange();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>renderCharts());
+  new MutationObserver(()=>renderCharts()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-skin']});
+}
+init();
+</script>
+</body>
+</html>
