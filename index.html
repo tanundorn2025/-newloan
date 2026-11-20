@@ -377,7 +377,7 @@ Chart.register(pointLabels);
 function strokeFor(c,o){ // text keeps the line colour; low-contrast colours get a dark (or light) outline instead
   const h=String(c||'').replace('#',''); if(h.length<6) return {c:o.halo,w:3}; const n=parseInt(h.slice(0,6),16);
   const L=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255, dark=isDarkBg();
-  if(!dark&&L>0.62) return {c:'#3d3200',w:3}; if(dark&&L<0.35) return {c:'#f0efec',w:3}; return {c:o.halo,w:3}; }
+  if(!dark&&L>0.62) return {c:'#a3a3a3',w:1.8}; if(dark&&L<0.35) return {c:'#f0efec',w:3}; return {c:o.halo,w:3}; }
 function fillFor(c,o){ // keep colored labels readable against the surface
   const h=String(c||'').replace('#',''); if(h.length<6) return o.ink; const n=parseInt(h.slice(0,6),16);
   const L=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255; const dark=isDarkBg();
