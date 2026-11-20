@@ -89,6 +89,7 @@ select,input[type=search]{font:inherit;background:var(--surface);color:var(--ink
 .card .cap{margin:2px 0 8px;font-size:12px;color:var(--muted)}
 .chart-box{position:relative;height:300px}
 .chart-box.tall{height:340px}
+.chart-box.lbl-on{height:420px}
 .note{font-size:12px;color:var(--muted);margin-top:8px}
 .tablecard{margin-top:12px}
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -341,15 +342,36 @@ const LBL_TITLE={ch1:'ล้านบาท',ch2:'%',ch4:'%',ch9:'%',ch13:'ล�
 st.lbl=new Set(); try{ JSON.parse(localStorage.getItem('loan-lbl')||'[]').forEach(x=>st.lbl.add(x)); }catch(e){}
 const pointLabels={id:'pointLabels',afterDatasetsDraw(chart,_a,o){
   if(!o||!o.show||!o.fmt) return; const {ctx,chartArea:ca}=chart; ctx.save();
-  ctx.font='600 11px '+getComputedStyle(document.body).fontFamily; ctx.textAlign='center'; ctx.lineJoin='round';
-  let k=0;
-  chart.data.datasets.forEach((ds,i)=>{ if(ds.noPt||/^เป้า 100%/.test(ds.label||'')) return; const meta=chart.getDatasetMeta(i); if(meta.hidden||meta.type!=='line') return;
-    const above=k++%2===0;
+  const fs=chart.width<520?10:11, H=fs+4; ctx.font=`600 ${fs}px `+getComputedStyle(document.body).fontFamily;
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.lineJoin='round';
+  const cols=new Map(); // x index -> labels
+  chart.data.datasets.forEach((ds,i)=>{ if(ds.noPt||/^เป้า 100%/.test(ds.label||'')||!chart.isDatasetVisible(i)) return;
+    const meta=chart.getDatasetMeta(i); if(meta.type!=='line') return;
     meta.data.forEach((el,j)=>{ const v=ds.data[j]; if(v==null||!Number.isFinite(el.x)||!Number.isFinite(el.y)) return;
-      const txt=o.fmt(v); let y=above?el.y-8:el.y+8; ctx.textBaseline=above?'bottom':'top';
-      if(y<ca.top+10){y=el.y+8;ctx.textBaseline='top';} if(y>ca.bottom-10){y=el.y-8;ctx.textBaseline='bottom';}
-      ctx.lineWidth=3; ctx.strokeStyle=o.halo; ctx.strokeText(txt,el.x,y);
-      ctx.fillStyle=fillFor(ds.borderColor,o); ctx.fillText(txt,el.x,y); }); });
+      const txt=o.fmt(v); if(!cols.has(j)) cols.set(j,[]); cols.get(j).push({x:el.x,py:el.y,txt,w:ctx.measureText(txt).width,c:ds.borderColor}); }); });
+  const top=ca.top+H/2, bot=ca.bottom-H/2, placed=[];
+  for(const list of cols.values()){
+    list.sort((a,b)=>a.py-b.py);
+    const n=list.length;
+    // preferred: topmost label above its point, bottom-most below, middle ones on the side with more room
+    list.forEach((l,k)=>{ l.y=(k===n-1&&n>1)?l.py+H*0.8:l.py-H*0.8; });
+    // spread so labels in one column never overlap (keep order = order of points)
+    for(let k=1;k<n;k++) if(list[k].y<list[k-1].y+H) list[k].y=list[k-1].y+H;
+    if(list[n-1].y>bot){ list[n-1].y=bot; for(let k=n-2;k>=0;k--) if(list[k].y>list[k+1].y-H) list[k].y=list[k+1].y-H; }
+    if(list[0].y<top){ list[0].y=top; for(let k=1;k<n;k++) if(list[k].y<list[k-1].y+H) list[k].y=list[k-1].y+H; }
+    list.forEach(l=>{ // keep inside horizontally
+      l.x=Math.min(Math.max(l.x,ca.left+l.w/2+2),ca.right-l.w/2+12); placed.push(l); });
+  }
+  // neighbour columns: if two labels collide horizontally, nudge the later one vertically
+  placed.sort((a,b)=>a.x-b.x);
+  for(let i=0;i<placed.length;i++) for(let j=0;j<i;j++){ const A=placed[i],B=placed[j];
+    if(Math.abs(A.x-B.x)<(A.w+B.w)/2+3 && Math.abs(A.y-B.y)<H && A.x!==B.x){ A.y=(A.y>=B.y?B.y+H:B.y-H); A.y=Math.min(Math.max(A.y,top),bot); } }
+  chart.$labels={H,list:placed};
+  for(const l of placed){
+    if(Math.abs(l.y-l.py)>H*1.3){ ctx.strokeStyle=l.c||o.ink; ctx.globalAlpha=.55; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(l.x,l.py); ctx.lineTo(l.x,l.y+(l.y>l.py?-H/2:H/2)); ctx.stroke(); ctx.globalAlpha=1; }
+    ctx.lineWidth=3; ctx.strokeStyle=o.halo; ctx.strokeText(l.txt,l.x,l.y);
+    ctx.fillStyle=fillFor(l.c,o); ctx.fillText(l.txt,l.x,l.y);
+  }
   ctx.restore(); }};
 Chart.register(pointLabels);
 function fillFor(c,o){ // keep colored labels readable against the surface
@@ -1064,8 +1086,9 @@ function init(){
   $('btnClear').onclick=clearData;
   Object.keys(LINE_LBL).forEach(id=>{ const cv=$(id); const c=cv&&cv.closest('.card'); if(!c) return;
     const b=document.createElement('button'); b.type='button'; b.className='lblt'; b.dataset.chart=id; b.setAttribute('data-noexport','');
+    cv.parentElement.classList.toggle('lbl-on',st.lbl.has(id));
     b.setAttribute('aria-pressed',st.lbl.has(id)); b.title='แสดง/ซ่อนตัวเลขที่จุด ('+LBL_TITLE[id]+')'; b.textContent='ตัวเลขที่จุด'; c.appendChild(b);
-    b.addEventListener('click',e=>{ e.stopPropagation(); if(st.lbl.has(id)) st.lbl.delete(id); else st.lbl.add(id); b.setAttribute('aria-pressed',st.lbl.has(id));
+    b.addEventListener('click',e=>{ e.stopPropagation(); if(st.lbl.has(id)) st.lbl.delete(id); else st.lbl.add(id); b.setAttribute('aria-pressed',st.lbl.has(id)); cv.parentElement.classList.toggle('lbl-on',st.lbl.has(id));
       try{localStorage.setItem('loan-lbl',JSON.stringify([...st.lbl]));}catch(_){} renderCharts(); }); });
   document.querySelectorAll('.chart-box').forEach(b=>{ const c=b.closest('.card'); if(!c) return; c.classList.add('zoomable');
     const e=document.createElement('button'); e.type='button'; e.className='enl'; e.setAttribute('data-noexport',''); e.setAttribute('aria-label','ขยายกราฟ'); e.textContent='⤢ ขยาย'; c.appendChild(e); });
