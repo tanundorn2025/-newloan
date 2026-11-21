@@ -67,6 +67,10 @@ select,input[type=search]{font:inherit;background:var(--surface);color:var(--ink
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .chip.preset{border-style:dashed}
+.cpick{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 8px 2px 3px;font-size:13px;color:var(--ink2);cursor:pointer}
+.cpick input{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer}
+.cpick input::-webkit-color-swatch-wrapper{padding:0}.cpick input::-webkit-color-swatch{border:1px solid var(--line);border-radius:50%}
+.cpick input::-moz-color-swatch{border:1px solid var(--line);border-radius:50%}
 .fgroup{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
 .sel-note{font-size:12px;color:var(--warn);margin:-6px 0 10px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:8px}
@@ -174,6 +178,7 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
         <button type="button" data-v="gen" aria-pressed="false">อื่นๆ (ยกเว้นปุ๋ย)</button>
         <button type="button" data-v="fert" aria-pressed="false">ปุ๋ย</button>
       </span></div>
+    <div class="fgroup"><span class="lab">สีเส้นภาค</span><span class="chips" id="regColorPick" role="group" aria-label="เลือกสีเส้นแต่ละภาค"></span></div>
     <div class="fgroup"><label class="lab" for="selSkin">ธีม</label><select id="selSkin" aria-label="เลือกธีม"></select></div>
   </div>
   <p class="sel-note hidden" id="selNote"></p>
@@ -334,9 +339,11 @@ const valueLabels = {
   }
 };
 Chart.register(valueLabels);
-const REG_LIGHT=['#0b6b30','#f5c400','#1a9fdc','#6833ad'], REG_DARK=['#1f8a45','#ffd21f','#2f9fe0','#8656d4'], RPS=['circle','triangle','rect','rectRot'];
+const REG_LIGHT=['#0b6b30','#f07800','#1a9fdc','#6833ad'], REG_DARK=['#1f8a45','#f58a1f','#2f9fe0','#8656d4'], RPS=['circle','triangle','rect','rectRot'];
 function isDarkBg(){ const h=css('--bg').replace('#',''); if(h.length<6) return false; const n=parseInt(h.slice(0,6),16); return (0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))<128; }
-function theme(){ return {r:isDarkBg()?REG_DARK:REG_LIGHT,ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
+let REG_USER=null; try{ const u=JSON.parse(localStorage.getItem('loan-regcolors')||'null'); if(Array.isArray(u)&&u.length===4&&u.every(c=>/^#[0-9a-f]{6}$/i.test(c))) REG_USER=u; }catch(e){}
+const regColors=()=>REG_USER||(isDarkBg()?REG_DARK:REG_LIGHT);
+function theme(){ return {r:regColors(),ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
 const LINE_LBL={ch1:v=>v.toFixed(1),ch2:v=>v.toFixed(0)+'%',ch4:v=>v.toFixed(0)+'%',ch9:v=>v.toFixed(1)+'%',ch13:v=>v.toFixed(0)};
 const LBL_TITLE={ch1:'ล้านบาท',ch2:'%',ch4:'%',ch9:'%',ch13:'ล้านบาท'};
 st.lbl=new Set(); try{ JSON.parse(localStorage.getItem('loan-lbl')||'[]').forEach(x=>st.lbl.add(x)); }catch(e){}
@@ -369,7 +376,6 @@ const pointLabels={id:'pointLabels',afterDatasetsDraw(chart,_a,o){
   chart.$labels={H,list:placed};
   for(const l of placed){
     if(Math.abs(l.y-l.py)>H*1.3){ ctx.strokeStyle=l.c||o.ink; ctx.globalAlpha=.55; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(l.x,l.py); ctx.lineTo(l.x,l.y+(l.y>l.py?-H/2:H/2)); ctx.stroke(); ctx.globalAlpha=1; }
-    const st2=strokeFor(l.c,o); ctx.lineWidth=st2.w; ctx.strokeStyle=st2.c; ctx.strokeText(l.txt,l.x,l.y);
     ctx.fillStyle=l.c||o.ink; ctx.fillText(l.txt,l.x,l.y);
   }
   ctx.restore(); }};
@@ -674,7 +680,7 @@ async function exportPptx(){
   const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; // 13.33 x 7.5
   const FONT='Tahoma', INK='1F2937', GREY='6B7280', BLUE='2A78D6', ORG='EB6834', AQ='1BAF7A', YEL='EDA100', TGT='8A909C', RED='D23B3A', GRN='0B8A55';
   const pv=(id,fc)=>st.lbl.has(id)?{showValue:true,dataLabelFormatCode:fc,dataLabelFontSize:9,dataLabelPosition:'t',dataLabelFontFace:FONT}:{};
-  const RC=['0B6B30','F5C400','1A9FDC','6833AD'];
+  const RC=regColors().map(c=>c.replace('#','').toUpperCase());
   const f=st.month, t=st.type, reg=0, v=computeView(), ins=insights();
   const head=(s,title,sub)=>{ s.background={color:'FFFFFF'}; s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:0.12,fill:{color:BLUE}});
     s.addText(title,{x:0.5,y:0.3,w:12.3,h:0.6,fontFace:FONT,fontSize:24,bold:true,color:INK});
@@ -1088,6 +1094,12 @@ function init(){
   $('fileIn').onchange=async e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ console.error(err); toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } e.target.value=''; };
   $('btnUpload').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fileIn').click();}});
   $('btnClear').onclick=clearData;
+  const buildPick=()=>{ const rc=regColors(); $('regColorPick').innerHTML=rc.map((c,i)=>`<label class="cpick" title="สีเส้นภาค ${i+1}"><input type="color" data-i="${i}" value="${c}" aria-label="สีเส้นภาค ${i+1}">ภาค ${i+1}</label>`).join('')+'<button type="button" class="chip preset" id="regColorReset">สีเริ่มต้น</button>'; };
+  buildPick(); let rafC=0;
+  $('regColorPick').addEventListener('input',e=>{ const inp=e.target.closest('input[type=color]'); if(!inp) return; const cur=[...regColors()]; cur[+inp.dataset.i]=inp.value; REG_USER=cur;
+    try{localStorage.setItem('loan-regcolors',JSON.stringify(cur));}catch(_){} cancelAnimationFrame(rafC); rafC=requestAnimationFrame(()=>renderCharts()); });
+  $('regColorPick').addEventListener('click',e=>{ if(e.target.id!=='regColorReset') return; REG_USER=null; try{localStorage.removeItem('loan-regcolors');}catch(_){} buildPick(); renderCharts(); });
+  $('selSkin').addEventListener('change',()=>{ if(!REG_USER) buildPick(); });
   Object.keys(LINE_LBL).forEach(id=>{ const cv=$(id); const c=cv&&cv.closest('.card'); if(!c) return;
     const b=document.createElement('button'); b.type='button'; b.className='lblt'; b.dataset.chart=id; b.setAttribute('data-noexport','');
     cv.parentElement.classList.toggle('lbl-on',st.lbl.has(id));
