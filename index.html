@@ -228,7 +228,9 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
   </div>
   <section class="card" style="margin-top:8px" data-pdf="heat">
     <div class="tools"><div><h3 id="t14">Heatmap % ทำได้ รายพื้นที่ × เดือน</h3><p class="cap" id="c14" style="margin:0"></p></div>
-      <div class="hm-legend" id="hmLegend"></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">
+        <label class="lab" for="hmHit">กรองคอลัมน์ถึงเป้า</label><select id="hmHit" aria-label="กรองตามจำนวนเดือนที่ถึงเป้า"></select>
+        <div class="hm-legend" id="hmLegend"></div></div></div>
     <div class="tscroll" style="max-height:560px"><table id="heat"></table></div>
     <p class="note" id="n14"></p>
   </section>
@@ -270,7 +272,7 @@ function setCalendar(){ MS=MNO.map(i=>MS12[i]); MF=MNO.map(i=>MF12[i]); LAST=MNO
   PRE=[['ทั้งปี',MNO.map((_,i)=>i)],['ล่าสุด',[LAST]],['ไตรมาส 1',q(0,2)],['ไตรมาส 2',q(3,5)],['ไตรมาส 3',q(6,8)],['ไตรมาส 4',q(9,11)]].filter(p=>p[1].length); }
 setCalendar();
 const TYPES = {all:'รวมทุกประเภท', gen:'สินเชื่อทั่วไป (ยกเว้นปุ๋ย)', fert:'สินเชื่อปุ๋ย'};
-const st = {type:'all', months:new Set(), regions:new Set([1,2,3,4]), sortKey:'pAll', sortDir:1, q:''};
+const st = {hmHit:'all', type:'all', months:new Set(), regions:new Set([1,2,3,4]), sortKey:'pAll', sortDir:1, q:''};
 Object.defineProperty(st,'month',{get:()=>Math.max(...st.months)});
 const $ = id => document.getElementById(id);
 
@@ -930,8 +932,17 @@ function renderAnalysis(){
   $('hmLegend').innerHTML=[['≥ 100%',hexA(th.good,.30)],['80–99%',hexA(th.warn,.30)],['50–79%',hexA(css('--s2'),.30)],['< 50%',hexA(th.bad,.38)]].map(x=>`<span><i style="background:${x[1]}"></i>${x[0]}</span>`).join('');
   $('c14').textContent=`${TYPES[t]} · ${regLabel()} · ${MS[A.hm[0]]}–${MS[A.hm[A.hm.length-1]]} (ช่วงที่โครงสร้างพื้นที่เดียวกัน) · เรียงจากพื้นที่ที่ต่ำกว่า 80% ติดต่อกันนานที่สุด`;
   const head='<thead><tr><th>รหัส</th><th>พื้นที่</th><th>ภาค</th>'+A.hm.map(m=>`<th style="text-align:center">${MS[m]}</th>`).join('')+'<th>ถึงเป้า</th><th>ต่ำกว่า 80% ติดกัน</th></tr></thead>';
-  const body=A.rows.map(r=>`<tr><td>${r.code}</td><td>${r.name}</td><td>ภาค ${r.region}</td>`+A.hm.map(m=>{const v=r.v[m];return `<td class="hc" style="background:${hmCol(v)}">${v==null?'–':(v*100).toFixed(0)+'%'}</td>`;}).join('')+`<td>${r.hit}/${r.n} เดือน</td><td class="streak ${r.streak>=3?'pct bad':''}">${r.streak?r.streak+' เดือน':'–'}</td></tr>`).join('');
-  $('heat').innerHTML=head+'<tbody>'+body+'</tbody>';
+  const nM=A.hm.length, cntBy=k=>A.rows.filter(r=>r.n&&r.hit===k).length;
+  const opts=[['all',`ทั้งหมด (${A.rows.length} พื้นที่)`],['0',`ไม่เคยถึงเป้า 0/${nM} (${cntBy(0)})`]];
+  for(let k=1;k<nM;k++) opts.push([String(k),`ถึงเป้า ${k}/${nM} เดือน (${cntBy(k)})`]);
+  if(nM>0) opts.push([String(nM),`ถึงเป้าทุกเดือน ${nM}/${nM} (${cntBy(nM)})`]);
+  opts.push(['half',`ถึงเป้าอย่างน้อยครึ่งหนึ่ง (${A.rows.filter(r=>r.n&&r.hit>=nM/2).length})`],['lthalf',`ถึงเป้าน้อยกว่าครึ่งหนึ่ง (${A.rows.filter(r=>r.n&&r.hit<nM/2).length})`]);
+  if(!opts.some(o=>o[0]===st.hmHit)) st.hmHit='all';
+  $('hmHit').innerHTML=opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join(''); $('hmHit').value=st.hmHit;
+  const hf=st.hmHit, rowsF=A.rows.filter(r=>hf==='all'?true:hf==='half'?(r.n&&r.hit>=nM/2):hf==='lthalf'?(r.n&&r.hit<nM/2):(r.n&&r.hit===+hf));
+  const body=rowsF.map(r=>`<tr><td>${r.code}</td><td>${r.name}</td><td>ภาค ${r.region}</td>`+A.hm.map(m=>{const v=r.v[m];return `<td class="hc" style="background:${hmCol(v)}">${v==null?'–':(v*100).toFixed(0)+'%'}</td>`;}).join('')+`<td>${r.hit}/${r.n} เดือน</td><td class="streak ${r.streak>=3?'pct bad':''}">${r.streak?r.streak+' เดือน':'–'}</td></tr>`).join('');
+  $('heat').innerHTML=head+'<tbody>'+(body||`<tr><td colspan="${nM+5}" style="text-align:center;color:var(--muted)">ไม่มีพื้นที่ตามเงื่อนไขที่กรอง</td></tr>`)+'</tbody>';
+  if(hf!=='all') $('c14').textContent+=` · กรอง: ${$('hmHit').selectedOptions[0].textContent.replace(/\s*\(\d+\)$/,'')} → แสดง ${rowsF.length} จาก ${A.rows.length} พื้นที่`;
   const s3=A.rows.filter(r=>r.streak>=3).length, never=A.rows.filter(r=>r.n&&r.hit===0).length;
   $('n14').textContent=`ต่ำกว่า 80% ติดต่อกันตั้งแต่ 3 เดือนขึ้นไป ${s3} พื้นที่ · ไม่เคยถึงเป้าเลยในช่วงนี้ ${never} พื้นที่ จาก ${A.rows.length} พื้นที่`;
 }
@@ -1094,6 +1105,7 @@ function init(){
   $('fileIn').onchange=async e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ console.error(err); toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } e.target.value=''; };
   $('btnUpload').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fileIn').click();}});
   $('btnClear').onclick=clearData;
+  $('hmHit').addEventListener('change',e=>{ st.hmHit=e.target.value; renderAnalysis(); });
   const buildPick=()=>{ const rc=regColors(); $('regColorPick').innerHTML=rc.map((c,i)=>`<label class="cpick" title="สีเส้นภาค ${i+1}"><input type="color" data-i="${i}" value="${c}" aria-label="สีเส้นภาค ${i+1}">ภาค ${i+1}</label>`).join('')+'<button type="button" class="chip preset" id="regColorReset">สีเริ่มต้น</button>'; };
   buildPick(); let rafC=0;
   $('regColorPick').addEventListener('input',e=>{ const inp=e.target.closest('input[type=color]'); if(!inp) return; const cur=[...regColors()]; cur[+inp.dataset.i]=inp.value; REG_USER=cur;
