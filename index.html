@@ -135,6 +135,13 @@ tbody tr:hover{background:var(--accent-soft)}
 .empty h2{margin:0 0 6px;font-size:20px}
 .empty p{margin:4px auto;max-width:640px;color:var(--ink2)}
 .empty.drag{border-color:var(--accent);background:var(--accent-soft)}
+.maxbtn{position:absolute;top:6px;right:6px}
+.maxable .tools{padding-right:86px}
+.card.maxi{position:fixed;inset:6px;z-index:40;margin:0!important;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
+.card.maxi .tscroll{max-height:none!important;flex:1;min-height:0}
+.card.maxi #heat td,.card.maxi #heat th{font-size:13px;padding:6px 8px}
+.maxi-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:39}
+body.has-maxi{overflow:hidden}
 footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
 @media (max-width:520px){.kpi .val{font-size:24px}.chart-box{height:260px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -226,7 +233,7 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
     <div class="card"><h3 id="t17">การกระจายผลงานภายในภาค</h3><p class="cap" id="c17"></p><div class="chart-box tall"><canvas id="ch17" role="img" aria-label="กราฟกล่องการกระจาย % ทำได้รายภาค"></canvas></div><p class="note" id="n17"></p></div>
     <div class="card"><h3 id="t18">เปลี่ยนแปลงจากเดือนก่อน</h3><p class="cap" id="c18"></p><div class="chart-box tall"><canvas id="ch18" role="img" aria-label="กราฟแท่งการเปลี่ยนแปลงจากเดือนก่อน"></canvas></div><p class="note" id="n18"></p></div>
   </div>
-  <section class="card" style="margin-top:8px" data-pdf="heat">
+  <section class="card maxable" id="heatCard" style="margin-top:8px" data-pdf="heat">
     <div class="tools"><div><h3 id="t14">Heatmap % ทำได้ รายพื้นที่ × เดือน</h3><p class="cap" id="c14" style="margin:0"></p></div>
       <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">
         <label class="lab" for="hmHit">กรองคอลัมน์ถึงเป้า</label><select id="hmHit" aria-label="กรองตามจำนวนเดือนที่ถึงเป้า"></select>
@@ -235,7 +242,7 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
     <p class="note" id="n14"></p>
   </section>
 
-  <section class="card tablecard" id="tableCard" data-noexport-pdf>
+  <section class="card tablecard maxable" id="tableCard" data-noexport-pdf>
     <div class="tools">
       <div><h3 id="tableTitle">รายละเอียดรายพื้นที่</h3><p class="cap" id="tableCap" style="margin:0"></p></div>
       <input type="search" id="q" placeholder="ค้นหาพื้นที่ / รหัส" aria-label="ค้นหาพื้นที่">
@@ -1122,7 +1129,13 @@ function init(){
     const e=document.createElement('button'); e.type='button'; e.className='enl'; e.setAttribute('data-noexport',''); e.setAttribute('aria-label','ขยายกราฟ'); e.textContent='⤢ ขยาย'; c.appendChild(e); });
   document.addEventListener('click',e=>{ if(e.target.closest('#zoom')) return; const c=e.target.closest('.card.zoomable'); if(!c) return; const cv=c.querySelector('canvas'); if(cv) openZoom(cv.id,c); });
   $('zoom').addEventListener('click',e=>{ if(e.target===$('zoom')||e.target.closest('#zClose')) closeZoom(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeZoom(); });
+  const bd=document.createElement('div'); bd.className='maxi-backdrop hidden'; bd.setAttribute('data-noexport',''); document.body.appendChild(bd);
+  const setMax=(card,on)=>{ card.classList.toggle('maxi',on); bd.classList.toggle('hidden',!on); document.body.classList.toggle('has-maxi',on);
+    const b=card.querySelector('.maxbtn'); b.textContent=on?'ปิด ✕':'⤢ ขยาย'; b.setAttribute('aria-label',on?'ปิดการขยาย':'ขยายเต็มจอ'); if(on) b.focus(); };
+  document.querySelectorAll('.card.maxable').forEach(card=>{ const b=document.createElement('button'); b.type='button'; b.className='enl maxbtn'; b.setAttribute('data-noexport',''); b.textContent='⤢ ขยาย'; b.setAttribute('aria-label','ขยายเต็มจอ');
+    b.addEventListener('click',e=>{ e.stopPropagation(); setMax(card,!card.classList.contains('maxi')); }); card.appendChild(b); });
+  bd.addEventListener('click',()=>document.querySelectorAll('.card.maxi').forEach(c=>setMax(c,false)));
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeZoom(); document.querySelectorAll('.card.maxi').forEach(c=>setMax(c,false)); } });
   const es=$('emptyState'); ['dragenter','dragover'].forEach(n=>document.addEventListener(n,e=>{e.preventDefault(); if(!DATA.length) es.classList.add('drag');}));
   ['dragleave','drop'].forEach(n=>document.addEventListener(n,e=>{ if(n==='dragleave'&&e.relatedTarget) return; es.classList.remove('drag'); }));
   document.addEventListener('drop',async e=>{ e.preventDefault(); const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } });
