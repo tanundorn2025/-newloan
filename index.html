@@ -213,6 +213,14 @@ footer{color:var(--muted);font-size:12px;padding:16px 0 32px}
     <div class="card"><h3>NPL เฉลี่ยรายภาค</h3><p class="cap" id="c9"></p><div class="chart-box"><canvas id="ch9" role="img" aria-label="กราฟเส้น NPL เฉลี่ยรายภาค"></canvas></div></div>
     <div class="card"><h3 id="t10">10 พื้นที่ NPL สูงสุด</h3><p class="cap" id="c10"></p><div class="chart-box"><canvas id="ch10" role="img" aria-label="กราฟแท่งแนวนอน NPL สูงสุด"></canvas></div></div>
   </div>
+  <div class="card" style="margin-top:8px" data-pdf="row5b" id="nplGrpCard">
+    <h2 class="sec-h" style="margin:0 0 6px">NPL รายกลุ่มภายในภาค</h2>
+    <div class="grid" style="margin:0">
+      <div class="card" style="box-shadow:none"><h3 id="t19">NPL รายกลุ่ม รายเดือน</h3>
+        <div class="fgroup" style="margin:6px 0 2px"><span class="lab">เลือกภาค (เลือกได้หลายภาค)</span><span class="chips" id="nplRegTabs" role="group" aria-label="เลือกภาคที่จะดูรายกลุ่ม"></span></div><p class="cap" id="c19"></p><div class="chart-box tall"><canvas id="ch19" role="img" aria-label="กราฟเส้น NPL รายกลุ่มภายในภาค"></canvas></div><p class="note" id="n19"></p></div>
+      <div class="card" style="box-shadow:none"><h3 id="t20">NPL ทุกกลุ่มในภาค</h3><p class="cap" id="c20"></p><div class="chart-box tall" id="box20"><canvas id="ch20" role="img" aria-label="กราฟแท่ง NPL ทุกกลุ่มในภาค"></canvas></div><p class="note" id="n20"></p></div>
+    </div>
+  </div>
 
   <h2 class="sec-h" data-pdf="secA">การวิเคราะห์เชิงลึก</h2>
   <p class="sec-sub">ใช้ตัวกรองเดียวกับด้านบน (เดือน ภาค ประเภทสินเชื่อ)</p>
@@ -279,7 +287,7 @@ function setCalendar(){ MS=MNO.map(i=>MS12[i]); MF=MNO.map(i=>MF12[i]); LAST=MNO
   PRE=[['ทั้งปี',MNO.map((_,i)=>i)],['ล่าสุด',[LAST]],['ไตรมาส 1',q(0,2)],['ไตรมาส 2',q(3,5)],['ไตรมาส 3',q(6,8)],['ไตรมาส 4',q(9,11)]].filter(p=>p[1].length); }
 setCalendar();
 const TYPES = {all:'รวมทุกประเภท', gen:'สินเชื่อทั่วไป (ยกเว้นปุ๋ย)', fert:'สินเชื่อปุ๋ย'};
-const st = {hmHit:'all', type:'all', months:new Set(), regions:new Set([1,2,3,4]), sortKey:'pAll', sortDir:1, q:''};
+const st = {nplRegs:new Set([1]), hmHit:'all', type:'all', months:new Set(), regions:new Set([1,2,3,4]), sortKey:'pAll', sortDir:1, q:''};
 Object.defineProperty(st,'month',{get:()=>Math.max(...st.months)});
 const $ = id => document.getElementById(id);
 
@@ -353,8 +361,8 @@ function isDarkBg(){ const h=css('--bg').replace('#',''); if(h.length<6) return 
 let REG_USER=null; try{ const u=JSON.parse(localStorage.getItem('loan-regcolors')||'null'); if(Array.isArray(u)&&u.length===4&&u.every(c=>/^#[0-9a-f]{6}$/i.test(c))) REG_USER=u; }catch(e){}
 const regColors=()=>REG_USER||(isDarkBg()?REG_DARK:REG_LIGHT);
 function theme(){ return {r:regColors(),ink:css('--ink'),ink2:css('--ink2'),grid:css('--grid'),surface:css('--surface'),s:[css('--s1'),css('--s2'),css('--s3'),css('--s4')],target:css('--target'),good:css('--good'),warn:css('--warn'),bad:css('--bad')}; }
-const LINE_LBL={ch1:v=>v.toFixed(1),ch2:v=>v.toFixed(0)+'%',ch4:v=>v.toFixed(0)+'%',ch9:v=>v.toFixed(1)+'%',ch13:v=>v.toFixed(0)};
-const LBL_TITLE={ch1:'ล้านบาท',ch2:'%',ch4:'%',ch9:'%',ch13:'ล้านบาท'};
+const LINE_LBL={ch19:v=>v.toFixed(1)+'%',ch1:v=>v.toFixed(1),ch2:v=>v.toFixed(0)+'%',ch4:v=>v.toFixed(0)+'%',ch9:v=>v.toFixed(1)+'%',ch13:v=>v.toFixed(0)};
+const LBL_TITLE={ch19:'%',ch1:'ล้านบาท',ch2:'%',ch4:'%',ch9:'%',ch13:'ล้านบาท'};
 st.lbl=new Set(); try{ JSON.parse(localStorage.getItem('loan-lbl')||'[]').forEach(x=>st.lbl.add(x)); }catch(e){}
 const pointLabels={id:'pointLabels',afterDatasetsDraw(chart,_a,o){
   if(!o||!o.show||!o.fmt) return; const {ctx,chartArea:ca}=chart; ctx.save();
@@ -675,6 +683,11 @@ function exportXlsx(){
     const S5=[['รหัส','พื้นที่','ภาค','% ทั่วไป','% ปุ๋ย','กลุ่ม']]; B2.gf.forEach(x=>S5.push([x.code,x.name,'ภาค '+x.region,x.pg,x.pf,x.q5])); addSheet('ทั่วไป เทียบ ปุ๋ย',S5,[11,26,9,10,10,20],[3,4]);
     const S6=[['ภาค','จำนวนพื้นที่','ต่ำสุด','Q1','มัธยฐาน','Q3','สูงสุด','ผลรวมภาค']]; B2.box.forEach(b=>S6.push(['ภาค '+b.r,b.n,...[b.min,b.q1,b.med,b.q3,b.max].map(v=>v==null?'':v/100),n(b.agg)])); addSheet('การกระจายรายภาค',S6,[9,12,10,10,10,10,10,12],[2,3,4,5,6,7]);
     if(B2.mom){ const S7=[['รหัส','พื้นที่','ภาค','% '+MS[B2.mom.m0],'% '+MS[B2.mom.m1],'เปลี่ยน (จุด %)']]; B2.mom.areas.forEach(x=>S7.push([x.code,x.name,'ภาค '+x.region,x.p0,x.p,x.d])); S7.push([]); B2.mom.regs.forEach(x=>S7.push(['','ภาค '+x.r,'',n(x.p0),n(x.p1),n(x.d)])); addSheet('เทียบเดือนก่อน',S7,[11,26,9,10,10,14],[3,4,5]); }
+    { const S8=[['ภาค','รหัส','กลุ่ม/พื้นที่']]; let hdr=null;
+      [1,2,3,4].filter(r=>st.regions.has(r)).forEach(r=>{ const G=nplGroups(r); if(!hdr){hdr=G.ms; S8[0].push(...G.ms.map(m=>'NPL '+MS[m]));}
+        G.g.slice().sort((a,b)=>String(a.code).localeCompare(String(b.code))).forEach(o=>S8.push(['ภาค '+r,o.code,o.name,...hdr.map(m=>n(o.v[m]))]));
+        S8.push(['ภาค '+r,'','ค่าเฉลี่ยภาค',...G.avgBy.map(v=>n(v))]); });
+      if(hdr&&hdr.length) addSheet('NPL รายกลุ่ม',S8,[9,10,24,...hdr.map(()=>10)],hdr.map((_,i)=>3+i)); }
     addSheet('Heatmap รายพื้นที่',S4,[11,26,9,...AN.hm.map(()=>9),14,12,16],AN.hm.map((_,i)=>3+i));
   }
   // notes
@@ -773,6 +786,16 @@ async function exportPptx(){
     s.addChart(pptx.charts.BAR,[{name:'NPL',labels:nr.map(r=>r[4]),values:nr.map(r=>+(r[9]*100).toFixed(1))}],{x:6.8,y:1.4,w:6.1,h:4.8,...axisOpt,showLegend:false,barDir:'bar',chartColors:[RED],showValue:true,dataLabelFormatCode:'0.0"%"',dataLabelFontSize:10,catAxisOrientation:'maxMin',catAxisLabelFontSize:10});
     take(s,ins.find(x=>x.startsWith('NPL'))||ins[0]);
   }
+  for(const R of [1,2,3,4].filter(r=>st.nplRegs.has(r))){ const G=nplGroups(R);
+    if(G.ms.length&&G.g.length){
+      s=pptx.addSlide(); head(s,`NPL รายกลุ่มภายในภาค ${R}`,`${G.g.length} กลุ่ม · ${MS[G.ms[0]]}–${MS[G.ms[G.ms.length-1]]} · ซ้าย: 5 กลุ่ม NPL สูงสุด + ค่าเฉลี่ยภาค · ขวา: ทุกกลุ่ม ${MS[G.last]}`);
+      const tp=G.g.slice(0,5), lb=G.ms.map(m=>MS[m]);
+      s.addChart(pptx.charts.LINE,[...tp.map(o=>({name:o.name,labels:lb,values:G.ms.map(m=>o.v[m]==null?null:+(o.v[m]*100).toFixed(2))})),{name:'ค่าเฉลี่ยภาค',labels:lb,values:G.avgBy.map(v=>v==null?null:+(v*100).toFixed(2))}],
+        {x:0.4,y:1.4,w:6.3,h:4.9,...axisOpt,chartColors:[...HL.map(c=>c.replace('#','')),'333333'],lineSize:2,lineDataSymbolSize:5,valAxisLabelFormatCode:'0"%"',...pv('ch19','0.0"%"')});
+      const all=G.g.filter(o=>o.last!=null);
+      s.addChart(pptx.charts.BAR,[{name:'NPL',labels:all.map(o=>o.name),values:all.map(o=>+(o.last*100).toFixed(1))}],
+        {x:6.9,y:1.4,w:6.0,h:5.4,...axisOpt,showLegend:false,barDir:'bar',chartColors:[RC[R-1]],showValue:true,dataLabelFormatCode:'0.0"%"',dataLabelFontSize:8,catAxisOrientation:'maxMin',catAxisLabelFontSize:8});
+    } }
   { const AN=analysis(), pc=AN.pace;
     // A scatter
     if(AN.pts.length){
@@ -1033,6 +1056,62 @@ function renderAnalysis2(){
   }
 }
 const __rc1=renderCharts; renderCharts=function(){ __rc1(); if(DATA.length) renderAnalysis2(); };
+
+/* ---------- NPL by group within a region ---------- */
+const HL=['#e03131','#f08c00','#1c7ed6','#7048e8','#2b8a3e'];
+function nplGroups(reg){
+  const nm=nplMonths(); if(!nm.length) return {ms:[],g:[],avgBy:[],last:null,approx:[]};
+  const lastS=STRUCT[LAST], cur=DATA.filter(r=>r[0]===LAST&&r[1]===reg), by=new Map(), approx=new Set();
+  cur.forEach(r=>by.set(r[3],{code:r[3],name:r[4],region:reg,v:{}}));
+  const byName=new Map([...by.values()].map(o=>[o.name,o]));
+  nm.forEach(m=>{ DATA.forEach(r=>{ if(r[0]!==m||r[1]!==reg||r[9]==null) return;
+    let o=by.get(r[3]);
+    if(!o&&STRUCT[m]!==lastS){ o=byName.get(r[4]); if(o) approx.add(m); } // older structure: same name in same region
+    if(o&&o.v[m]==null) o.v[m]=r[9]; }); });
+  const g=[...by.values()].filter(o=>Object.keys(o.v).length), last=nm[nm.length-1];
+  g.forEach(o=>o.last=o.v[last]); g.sort((a,b)=>(b.last??-1)-(a.last??-1));
+  const avgBy=nm.map(m=>avg(DATA.filter(r=>r[0]===m&&r[1]===reg&&r[9]!=null).map(r=>r[9])));
+  return {ms:nm,g,avgBy,last,approx:[...approx].sort((a,b)=>a-b)};
+}
+function renderNplGroups(){
+  const th=theme();
+  if(!st.nplRegs||!st.nplRegs.size) st.nplRegs=new Set([1]);
+  const regs=[1,2,3,4].filter(r=>st.nplRegs.has(r)), single=regs.length===1;
+  $('nplRegTabs').innerHTML=`<button type="button" class="chip preset" data-r="0" aria-pressed="${regs.length===4}">ทุกภาค</button>`+[1,2,3,4].map(r=>`<button type="button" class="chip" data-r="${r}" aria-pressed="${st.nplRegs.has(r)}" style="${st.nplRegs.has(r)?`background:${th.r[r-1]};border-color:${th.r[r-1]};color:#fff`:''}">ภาค ${r}</button>`).join('');
+  const GS=regs.map(r=>({r,...nplGroups(r)})).filter(G=>G.ms.length);
+  if(!GS.length||!GS.some(G=>G.g.length)){ $('c19').textContent='ไม่มีข้อมูล NPL รายกลุ่มในไฟล์นี้'; mk('ch19',{type:'line',data:{labels:[],datasets:[]}}); mk('ch20',{type:'bar',data:{labels:[],datasets:[]}}); $('n19').textContent=$('n20').textContent=''; return; }
+  const ms=GS[0].ms, rl=regs.map(r=>'ภาค '+r).join(', '), approx=[...new Set(GS.flatMap(G=>G.approx))].sort((a,b)=>a-b);
+  $('t19').textContent=`NPL รายกลุ่ม รายเดือน · ${regs.length===4?'ทุกภาค':rl}`;
+  $('c19').textContent=`${GS.reduce((s,G)=>s+G.g.length,0)} กลุ่ม · ${MS[ms[0]]}–${MS[ms[ms.length-1]]} · `+(single?'เส้นสี = 5 กลุ่ม NPL สูงสุดเดือนล่าสุด · เส้นเทา = กลุ่มอื่น':'เส้นบางสีตามภาค = แต่ละกลุ่ม (ชี้เพื่อดูชื่อ) · เลือกภาคเดียวเพื่อดู 5 กลุ่มสูงสุดแบบเน้นสี')+' · เส้นประ = ค่าเฉลี่ยภาค · ชี้ที่เส้นเพื่อดูชื่อกลุ่ม';
+  const ds=[];
+  GS.forEach(G=>{ const top=G.g.slice(0,5).map(o=>o.code);
+    G.g.slice().reverse().forEach(o=>{ const k=top.indexOf(o.code), hl=k>=0;
+      const col=single?(hl?HL[k]:hexA(th.target,.45)):hexA(th.r[G.r-1],.4), strong=single&&hl;
+      ds.push({label:`${o.code} ${o.name}`,data:ms.map(m=>o.v[m]==null?null:+(o.v[m]*100).toFixed(2)),borderColor:col,backgroundColor:col,
+        borderWidth:strong?2.5:1.1,pointRadius:strong?3:0,pointHoverRadius:5,tension:.2,spanGaps:false,noPt:!hl||!single,order:hl?1:2,hl:single&&hl}); }); });
+  GS.forEach(G=>ds.push({label:`ค่าเฉลี่ยภาค ${G.r}`,data:G.avgBy.map(v=>v==null?null:+(v*100).toFixed(2)),borderColor:single?th.r[G.r-1]:th.r[G.r-1],borderDash:[6,4],borderWidth:3.2,pointRadius:0,tension:.2,order:0,hl:true,pointStyle:RPS[G.r-1]}));
+  ds.push({label:'เกณฑ์ 10%',data:ms.map(()=>10),borderColor:th.bad,borderDash:[2,3],borderWidth:1.2,pointRadius:0,noPt:true,order:3,hl:true});
+  mk('ch19',{type:'line',data:{labels:ms.map(m=>MS[m]),datasets:ds},
+    options:{interaction:{mode:'nearest',intersect:false,axis:'xy'},
+      plugins:{legend:Object.assign(legend(th),{labels:Object.assign(legend(th).labels,{filter:(it,d)=>d.datasets[it.datasetIndex].hl})}),
+        tooltip:tipBase(th,{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)}%`}})},
+      scales:{x:axisBase(th),y:Object.assign(axisBase(th),{beginAtZero:true,ticks:{color:th.ink2,callback:v=>v+'%'}})}}});
+  $('n19').textContent=GS.map(G=>{const ab=G.avgBy[G.avgBy.length-1],ov=G.g.filter(o=>o.last!=null&&o.last>=.1);return `ภาค ${G.r}: เฉลี่ย ${MS[G.last]} ${P(ab,2)} · เกิน 10% ${ov.length} กลุ่ม`+(ov.length&&single?` (${ov.slice(0,5).map(o=>o.name).join(', ')}${ov.length>5?' …':''})`:'');}).join(' | ')
+    +(approx.length?` · ${approx.map(m=>MS[m]).join(', ')} เป็นโครงสร้างสาขาเดิม: ใช้ค่าของสาขาที่ชื่อตรงกับกลุ่ม กลุ่มที่ไม่มีสาขาชื่อตรงกันจะไม่มีจุดในเดือนนั้น`:'');
+  /* bars */
+  const nmo=nplMonth(); const rows=nmo==null?[]:DATA.filter(r=>r[0]===nmo&&st.nplRegs.has(r[1])&&r[9]!=null).sort((a,b)=>b[9]-a[9]);
+  $('t20').textContent=`NPL ทุกกลุ่ม · ${regs.length===4?'ทุกภาค':rl}`+(nmo!=null?` · ${MF[nmo]}`:'');
+  $('box20').style.height=Math.max(340,rows.length*18+70)+'px';
+  const av=avg(rows.map(r=>r[9]));
+  $('c20').textContent=`${rows.length} กลุ่ม เรียงจากมากไปน้อย · สีแท่งตามภาค · ตัวเลขสีแดง = NPL ≥ 10% · เส้นประ = ค่าเฉลี่ย ${P(av,2)}`;
+  mk('ch20',{data:{labels:rows.map(r=>`${r[3]} ${r[4]}`),datasets:[
+    {type:'bar',label:'NPL',data:rows.map(r=>+(r[9]*100).toFixed(2)),backgroundColor:rows.map(r=>hexA(th.r[r[1]-1],.9)),borderRadius:3,barThickness:11},
+    {type:'line',label:'ค่าเฉลี่ย',data:rows.map(()=>av==null?null:+(av*100).toFixed(2)),borderColor:th.ink,borderDash:[5,4],borderWidth:1.5,pointRadius:0}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},valueLabels:{fmt:v=>v.toFixed(1)+'%'},tooltip:tipBase(th,{filter:i=>i.datasetIndex===0,callbacks:{label:c=>`ภาค ${rows[c.dataIndex][1]} · NPL ${c.parsed.x.toFixed(2)}%`}})},
+      scales:{x:Object.assign(axisBase(th),{beginAtZero:true,grace:'12%',ticks:{color:th.ink2,callback:v=>v+'%'}}),y:Object.assign(axisBase(th),{grid:{display:false},ticks:{autoSkip:false,font:{size:10},color:c=>rows[c.index]&&rows[c.index][9]>=.1?th.bad:th.ink2}})},layout:{padding:{right:30}}}});
+  $('n20').textContent=rows.length?`สูงสุด ${rows[0][4]} ${P(rows[0][9],2)} · ต่ำสุด ${rows[rows.length-1][4]} ${P(rows[rows.length-1][9],2)} · เกิน 10% ${rows.filter(r=>r[9]>=.1).length} กลุ่ม`:'';
+}
+const __rc2=renderCharts; renderCharts=function(){ __rc2(); if(DATA.length) renderNplGroups(); };
 const SKINS=[['auto','ตามระบบ (อัตโนมัติ)'],['blue','ฟ้าคลาสสิก'],['green','เขียวเกษตร'],['warm','ส้มอุ่น'],['purple','ม่วงสงบ'],['night','กลางคืน (มืด)'],['emerald','มรกตมืด'],['mono','ขาวดำ (เหมาะกับพิมพ์)']];
 function applySkin(v,redraw){ const h=document.documentElement; if(v==='auto') h.removeAttribute('data-skin'); else h.setAttribute('data-skin',v);
   try{localStorage.setItem('loan-skin',v);}catch(e){} if(redraw) renderCharts(); }
@@ -1112,6 +1191,9 @@ function init(){
   $('fileIn').onchange=async e=>{const f=e.target.files&&e.target.files[0]; if(!f) return; try{ await loadFile(f); }catch(err){ console.error(err); toast('อ่านไฟล์ไม่สำเร็จ: '+(err.message||err),7000); } e.target.value=''; };
   $('btnUpload').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('fileIn').click();}});
   $('btnClear').onclick=clearData;
+  $('nplRegTabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; e.stopPropagation(); const r=+b.dataset.r;
+    if(r===0) st.nplRegs=new Set([1,2,3,4]); else if(st.nplRegs.has(r)){ if(st.nplRegs.size>1) st.nplRegs.delete(r); } else st.nplRegs.add(r);
+    renderNplGroups(); });
   $('hmHit').addEventListener('change',e=>{ st.hmHit=e.target.value; renderAnalysis(); });
   const buildPick=()=>{ const rc=regColors(); $('regColorPick').innerHTML=rc.map((c,i)=>`<label class="cpick" title="สีเส้นภาค ${i+1}"><input type="color" data-i="${i}" value="${c}" aria-label="สีเส้นภาค ${i+1}">ภาค ${i+1}</label>`).join('')+'<button type="button" class="chip preset" id="regColorReset">สีเริ่มต้น</button>'; };
   buildPick(); let rafC=0;
